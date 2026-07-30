@@ -1,0 +1,77 @@
+import React, { useRef, useEffect } from "react";
+import { useChatStore } from "../stores/chatStore";
+import MessageBubble from "./MessageBubble";
+import { Spinner } from "@fluentui/react-components";
+
+export default function ChatArea() {
+  const activeSessionId = useChatStore((s) => s.activeSessionId);
+  const sessions = useChatStore((s) => s.sessions);
+  const isStreaming = useChatStore((s) => s.isStreaming);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const session = sessions.find((s) => s.id === activeSessionId);
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [session?.messages.length, isStreaming]);
+
+  if (!session) return null;
+
+  const lastMsg = session.messages[session.messages.length - 1];
+  const showTypingIndicator = isStreaming && (!lastMsg || lastMsg.role === "user");
+
+  /** Build message list with model delimiters inserted when modelId changes. */
+  const renderedMessages: React.ReactNode[] = [];
+  let prevModelId: string | undefined;
+
+  for (const msg of session.messages) {
+    // Show delimiter when the assistant's model changes
+    if (msg.role === "assistant" && msg.modelId && msg.modelId !== prevModelId) {
+      const shortName = msg.modelId.split("/").pop() ?? msg.modelId;
+      renderedMessages.push(
+        <div key={`delimiter-${msg.id}`} className="model-delimiter">
+          <span className="model-delimiter-line" />
+          <span className="model-delimiter-label">{shortName}</span>
+          <span className="model-delimiter-line" />
+        </div>
+      );
+    }
+    if (msg.modelId) prevModelId = msg.modelId;
+
+    renderedMessages.push(
+      <MessageBubble
+        key={msg.id}
+        message={msg}
+        isLastUserMessage={
+          msg.role === "user" &&
+          session.messages.filter((m) => m.role === "user").slice(-1)[0]?.id === msg.id
+        }
+        isStreaming={isStreaming}
+      />
+    );
+  }
+
+  return (
+    <div className="chat-area">
+      <div className="chat-messages">
+        {renderedMessages}
+
+        {showTypingIndicator && (
+          <div className="message-row assistant">
+            <div className="message-avatar assistant">AI</div>
+            <div className="message-bubble assistant">
+              <div className="typing-indicator">
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+    </div>
+  );
+}
