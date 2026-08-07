@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Button,
   Drawer,
@@ -16,8 +16,6 @@ interface SettingsDrawerProps {
 }
 
 export default function SettingsDrawer({ defaultTab = "app", onClose }: SettingsDrawerProps) {
-  const [activeTab] = useState(defaultTab);
-
   return (
     <Drawer
       open
@@ -31,13 +29,13 @@ export default function SettingsDrawer({ defaultTab = "app", onClose }: Settings
             <Button appearance="transparent" icon={<DismissRegular />} onClick={onClose} />
           }
         >
-          {activeTab === "app" ? "App Settings" : "Model Settings"}
+          {defaultTab === "app" ? "App Settings" : "Model Settings"}
         </DrawerHeaderTitle>
       </DrawerHeader>
       <DrawerBody style={{ padding: 0 }}>
         <div style={{ padding: 16 }}>
-          {activeTab === "app" && <AppSettings />}
-          {activeTab === "model" && <ModelSettings />}
+          {defaultTab === "app" && <AppSettings />}
+          {defaultTab === "model" && <ModelSettings />}
         </div>
       </DrawerBody>
     </Drawer>

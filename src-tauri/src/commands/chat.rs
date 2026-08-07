@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, State};
 
 /// A single message in the chat.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -49,12 +49,7 @@ fn resolve_model_for_server(model: Option<&str>) -> Option<String> {
 }
 
 /// Fetch the first loaded model from the server's /v1/models endpoint.
-async fn fetch_first_loaded_model(base_url: &str) -> Option<String> {
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(3))
-        .build()
-        .ok()?;
-
+async fn fetch_first_loaded_model(client: &reqwest::Client, base_url: &str) -> Option<String> {
     let url = format!("{}/v1/models", base_url);
     let resp = client.get(&url).send().await.ok()?;
     let body: serde_json::Value = resp.json().await.ok()?;
@@ -76,6 +71,7 @@ async fn fetch_first_loaded_model(base_url: &str) -> Option<String> {
 /// Returns the refreshed ServerStatus after loading completes.
 #[tauri::command]
 pub async fn load_model(
+    state: State<'_, super::AppState>,
     model: String,
     base_url: Option<String>,
 ) -> Result<super::server::ServerStatus, String> {
@@ -99,12 +95,8 @@ pub async fn load_model(
         "stream": false,
     });
 
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(600))
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
-
-    let response = client
+    let response = state
+        .http_client
         .post(&url)
         .header("Content-Type", "application/json")
         .json(&body)
@@ -122,7 +114,8 @@ pub async fn load_model(
     eprintln!("[load] model '{}' loaded successfully", clean_model);
 
     // Refresh server status to reflect newly loaded models
-    let status_resp = client
+    let status_resp = state
+        .http_client
         .get(format!("{}/v1/models", resolved_base))
         .send()
         .await
@@ -172,6 +165,7 @@ pub async fn unload_all_models(
 #[tauri::command]
 pub async fn chat_completion(
     app: AppHandle,
+    state: State<'_, super::AppState>,
     messages: Vec<ChatMessage>,
     settings: GenerationSettings,
     model: Option<String>,
@@ -218,7 +212,7 @@ pub async fn chat_completion(
     // Resolve model name — strip precision if present, or auto-detect from server
     let model_name = match resolve_model_for_server(model.as_deref()) {
         Some(name) => Some(name),
-        None => fetch_first_loaded_model(&resolved_base).await,
+        None => fetch_first_loaded_model(&state.http_client, &resolved_base).await,
     };
 
     if let Some(ref m) = model_name {
@@ -248,12 +242,8 @@ pub async fn chat_completion(
         body["max_tokens"] = serde_json::json!(mt);
     }
 
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(300))
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
-
-    let response = client
+    let response = state
+        .http_client
         .post(&url)
         .header("Content-Type", "application/json")
         .json(&body)
@@ -275,7 +265,6 @@ pub async fn chat_completion(
 
     let mut stream = response.bytes_stream();
     let mut buffer = String::new();
-    let mut full_response = String::new();
     let mut chunk_count: u32 = 0;
 
     while let Some(chunk_result) = stream.next().await {
@@ -296,10 +285,8 @@ pub async fn chat_completion(
             if let Some(data) = trimmed.strip_prefix("data:") {
                 let data = data.trim();
                 if data == "[DONE]" {
-                    eprintln!("[chat] stream complete: {} chunks, {} chars", chunk_count, full_response.len());
-                    let _ = app.emit("chat-done", serde_json::json!({
-                        "full_response": full_response,
-                    }));
+                    eprintln!("[chat] stream complete: {chunk_count} chunks");
+                    let _ = app.emit("chat-done", ());
                     return Ok(());
                 }
 
@@ -310,7 +297,6 @@ pub async fn chat_completion(
                             if let Some(delta) = choice.get("delta") {
                                 if let Some(content) = delta["content"].as_str() {
                                     if !content.is_empty() {
-                                        full_response.push_str(content);
                                         chunk_count += 1;
                                         let _ = app.emit("chat-chunk", serde_json::json!({
                                             "content": content,
@@ -326,10 +312,8 @@ pub async fn chat_completion(
     }
 
     // If we get here without [DONE], still emit done
-    eprintln!("[chat] stream ended without [DONE]: {} chunks, {} chars", chunk_count, full_response.len());
-    let _ = app.emit("chat-done", serde_json::json!({
-        "full_response": full_response,
-    }));
+    eprintln!("[chat] stream ended without [DONE]: {chunk_count} chunks");
+    let _ = app.emit("chat-done", ());
 
     Ok(())
 }

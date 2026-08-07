@@ -4,10 +4,6 @@ import { ArrowDownloadRegular, AddRegular } from "@fluentui/react-icons";
 import { useChatStore } from "../stores/chatStore";
 import { useModelStore } from "../stores/modelStore";
 
-interface WelcomeScreenProps {
-  onOpenModelBrowser?: () => void;
-}
-
 export default function WelcomeScreen() {
   const createSession = useChatStore((s) => s.createSession);
   const setActiveSession = useChatStore((s) => s.setActiveSession);

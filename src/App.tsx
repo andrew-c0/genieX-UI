@@ -4,7 +4,7 @@ import { Toaster } from "@fluentui/react-components";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import ChatArea from "./components/ChatArea";
-import ChatInput, { lastSendTime } from "./components/ChatInput";
+import ChatInput from "./components/ChatInput";
 import WelcomeScreen from "./components/WelcomeScreen";
 import ModelBrowser from "./components/ModelBrowser";
 import SettingsDrawer from "./components/SettingsDrawer";
@@ -14,6 +14,28 @@ import * as db from "./services/database";
 import * as geniex from "./services/geniex";
 import type { Message } from "./types";
 
+/** Debounce a callback — cancels the previous pending call when invoked again. */
+function useDebouncedCallback<T extends (...args: never[]) => void>(
+  callback: T,
+  delayMs: number,
+): T {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callbackRef = useRef(callback);
+  callbackRef.current = callback;
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  return ((...args: Parameters<T>) => {
+    if (timerRef.current !== null) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => callbackRef.current(...args), delayMs);
+  }) as T;
+}
+
 export default function App() {
   const sessions = useChatStore((s) => s.sessions);
   const activeSessionId = useChatStore((s) => s.activeSessionId);
@@ -22,6 +44,7 @@ export default function App() {
     (s) => s.updateLastAssistantMessage
   );
   const setStreaming = useChatStore((s) => s.setStreaming);
+  const lastSendTime = useChatStore((s) => s.lastSendTime);
 
   const setModels = useModelStore((s) => s.setModels);
   const setServerStatus = useModelStore((s) => s.setServerStatus);
@@ -77,24 +100,19 @@ export default function App() {
     return () => { unlisten.then((fn) => fn()); };
   }, []);
 
-  // ── Persist active session to DB whenever it changes ──────────
-  useEffect(() => {
-    if (!activeSessionId) return;
-    const session = sessions.find((s) => s.id === activeSessionId);
+  // ── Persist active session to DB (debounced) ──────────────────
+  const persistSession = useDebouncedCallback(() => {
+    const { sessions: currentSessions, activeSessionId: activeId } = useChatStore.getState();
+    if (!activeId) return;
+    const session = currentSessions.find((s) => s.id === activeId);
     if (session) {
       db.saveSession(session).catch(() => {});
     }
-  }, [sessions, activeSessionId]);
+  }, 500);
 
-  // ── Also persist newly created sessions immediately ───────────
-  //    (the effect above only fires when activeSessionId changes)
   useEffect(() => {
-    for (const s of sessions) {
-      if (s.messages.length === 0) {
-        db.saveSession(s).catch(() => {});
-      }
-    }
-  }, [sessions]);
+    persistSession();
+  }, [sessions, activeSessionId, persistSession]);
 
   // ── Listen for streaming chat chunks from Rust backend ────────
   useEffect(() => {
@@ -179,7 +197,7 @@ export default function App() {
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [activeSessionId]);
+  }, [activeSessionId, lastSendTime]);
 
   // ── Listen for pull progress ──────────────────────────────────
   useEffect(() => {

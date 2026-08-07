@@ -6,8 +6,7 @@ import * as geniex from "../services/geniex";
 import * as db from "../services/database";
 import type { Message } from "../types";
 
-/** Time the last send was triggered (used by App.tsx for stats). */
-export let lastSendTime = 0;
+const MAX_CONTEXT_CHARS = 8192;
 
 export default function ChatInput() {
   const [text, setText] = useState("");
@@ -16,6 +15,7 @@ export default function ChatInput() {
   const isStreaming = useChatStore((s) => s.isStreaming);
   const addMessage = useChatStore((s) => s.addMessage);
   const setStreaming = useChatStore((s) => s.setStreaming);
+  const setLastSendTime = useChatStore((s) => s.setLastSendTime);
   const serverStatus = useModelStore((s) => s.serverStatus);
   const serverPort = useModelStore((s) => s.serverPort);
   const activeModelId = useModelStore((s) => s.activeModelId);
@@ -26,7 +26,6 @@ export default function ChatInput() {
     s.sessions.find((sess) => sess.id === s.activeSessionId)
   );
   const contextChars = activeSession?.contextChars ?? 0;
-  const maxContextChars = 8192;
 
   /** Core send logic — uses activeModelId from the model store. */
   const doSend = useCallback(
@@ -35,7 +34,7 @@ export default function ChatInput() {
       apiMessages: { role: "user" | "assistant" | "system"; content: string }[],
     ) => {
       setStreaming(true);
-      lastSendTime = Date.now();
+      setLastSendTime(Date.now());
 
       const rawModelId = useModelStore.getState().activeModelId;
 
@@ -68,7 +67,7 @@ export default function ChatInput() {
         setStreaming(false);
       }
     },
-    [addMessage, setStreaming, serverPort],
+    [addMessage, setStreaming, setLastSendTime, serverPort],
   );
 
   /** Handle a normal new-message send. */
@@ -149,7 +148,7 @@ export default function ChatInput() {
 
   const isDisabled = !text.trim() || isStreaming || !serverStatus.running;
 
-  const contextPct = Math.min(100, Math.round((contextChars / maxContextChars) * 100));
+  const contextPct = Math.min(100, Math.round((contextChars / MAX_CONTEXT_CHARS) * 100));
   const contextColor =
     contextPct > 90 ? "#e74c3c" : contextPct > 70 ? "#f39c12" : "#2ecc71";
 
@@ -164,7 +163,7 @@ export default function ChatInput() {
             />
           </div>
           <span className="context-bar-label" style={{ color: contextColor }}>
-            {contextChars.toLocaleString()} / {maxContextChars.toLocaleString()} chars
+            {contextChars.toLocaleString()} / {MAX_CONTEXT_CHARS.toLocaleString()} chars
           </span>
         </div>
       )}

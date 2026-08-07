@@ -11,6 +11,8 @@ interface ChatState {
   activeSessionId: string | null;
   isStreaming: boolean;
   retryFromMessageId: string | null;
+  /** Timestamp when the last send was triggered — used for generation stats. */
+  lastSendTime: number;
 
   createSession: (modelId?: string) => string;
   deleteSession: (id: string) => void;
@@ -21,6 +23,7 @@ interface ChatState {
   removeMessagesAfter: (sessionId: string, messageId: string) => void;
   setStreaming: (streaming: boolean) => void;
   setRetryFromMessageId: (id: string | null) => void;
+  setLastSendTime: (time: number) => void;
   loadSessions: (sessions: ChatSession[]) => void;
   renameSession: (id: string, title: string) => void;
   setSessionModel: (sessionId: string, modelId: string) => void;
@@ -31,6 +34,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   activeSessionId: null,
   isStreaming: false,
   retryFromMessageId: null,
+  lastSendTime: 0,
 
   createSession: (modelId?: string) => {
     const id = crypto.randomUUID();
@@ -135,6 +139,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   setRetryFromMessageId: (id: string | null) => {
     set({ retryFromMessageId: id });
+  },
+
+  setLastSendTime: (time: number) => {
+    set({ lastSendTime: time });
   },
 
   loadSessions: (sessions: ChatSession[]) => {

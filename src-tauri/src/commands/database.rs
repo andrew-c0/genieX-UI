@@ -55,15 +55,38 @@ pub async fn load_sessions(
         .await
         .map_err(|e| e.to_string())?;
 
-    let mut result = Vec::with_capacity(sessions.len());
-    for s in sessions {
-        let messages = message::Entity::find()
-            .filter(message::Column::SessionId.eq(&s.id))
+    // Batch-load all messages in one query instead of N+1
+    let session_ids: Vec<String> = sessions.iter().map(|s| s.id.clone()).collect();
+
+    let all_messages = if session_ids.is_empty() {
+        vec![]
+    } else {
+        message::Entity::find()
+            .filter(message::Column::SessionId.is_in(&session_ids))
             .order_by_asc(message::Column::CreatedAt)
             .all(&*db)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| e.to_string())?
+    };
 
+    // Group messages by session_id
+    let mut msgs_by_session: Vec<(String, Vec<message::Model>)> = session_ids
+        .iter()
+        .map(|id| (id.clone(), Vec::new()))
+        .collect();
+    for msg in all_messages {
+        if let Some(entry) = msgs_by_session.iter_mut().find(|(id, _)| *id == msg.session_id) {
+            entry.1.push(msg);
+        }
+    }
+
+    let mut result = Vec::with_capacity(sessions.len());
+    for s in sessions {
+        let messages = msgs_by_session
+            .iter()
+            .find(|(id, _)| *id == s.id)
+            .map(|(_, msgs)| msgs.clone())
+            .unwrap_or_default();
         result.push(ChatSessionWithMessages {
             session: s,
             messages,
@@ -263,5 +286,3 @@ fn now_millis() -> i64 {
         .unwrap()
         .as_millis() as i64
 }
-
-

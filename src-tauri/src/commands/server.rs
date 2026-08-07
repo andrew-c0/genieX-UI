@@ -12,12 +12,7 @@ pub struct ServerStatus {
 }
 
 /// Probe the server's `/v1/models` endpoint to check if it's alive.
-async fn probe_server(port: u16) -> bool {
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap_or_default();
-
+async fn probe_server(client: &reqwest::Client, port: u16) -> bool {
     client
         .get(format!("http://127.0.0.1:{port}/v1/models"))
         .send()
@@ -36,7 +31,7 @@ pub async fn start_server(
     let serve_port = port.unwrap_or(18181);
 
     // First, check if a server is already running on the port (externally or by us)
-    if probe_server(serve_port).await {
+    if probe_server(&state.http_client, serve_port).await {
         return get_server_status(state, port).await;
     }
 
@@ -113,7 +108,7 @@ pub async fn start_server(
     // The server may take varying amounts of time to bind the port.
     for _ in 0..15 {
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-        if probe_server(serve_port).await {
+        if probe_server(&state.http_client, serve_port).await {
             return get_server_status(state, port).await;
         }
     }
@@ -159,14 +154,11 @@ pub async fn stop_server(state: State<'_, AppState>, port: Option<u16>) -> Resul
 /// Check if the GenieX server is healthy by hitting the models endpoint.
 /// Works regardless of whether we spawned the server or it's running externally.
 #[tauri::command]
-pub async fn get_server_status(_state: State<'_, AppState>, port: Option<u16>) -> Result<ServerStatus, String> {
+pub async fn get_server_status(state: State<'_, AppState>, port: Option<u16>) -> Result<ServerStatus, String> {
     let serve_port = port.unwrap_or(18181);
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap_or_default();
 
-    match client
+    match state
+        .http_client
         .get(format!("http://127.0.0.1:{serve_port}/v1/models"))
         .send()
         .await

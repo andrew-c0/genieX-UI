@@ -81,14 +81,6 @@ export default function ModelSettings() {
 
   if (!displayModel) return null;
 
-  if (downloadedModels.length === 0 && !displayModel) {
-    return (
-      <div style={{ color: "#8888a8", padding: "24px 0", textAlign: "center", fontSize: 13 }}>
-        No models downloaded. Pull a model first.
-      </div>
-    );
-  }
-
   return (
     <>
       {/* ── Model Picker ────────────────────────── */}

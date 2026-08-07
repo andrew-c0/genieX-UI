@@ -21,6 +21,15 @@ export default function ChatArea() {
   const lastMsg = session.messages[session.messages.length - 1];
   const showTypingIndicator = isStreaming && (!lastMsg || lastMsg.role === "user");
 
+  // Compute last user message ID once (avoids repeated .filter().slice() per bubble)
+  let lastUserMsgId: string | undefined;
+  for (let i = session.messages.length - 1; i >= 0; i--) {
+    if (session.messages[i].role === "user") {
+      lastUserMsgId = session.messages[i].id;
+      break;
+    }
+  }
+
   /** Build message list with model delimiters inserted when modelId changes. */
   const renderedMessages: React.ReactNode[] = [];
   let prevModelId: string | undefined;
@@ -43,10 +52,7 @@ export default function ChatArea() {
       <MessageBubble
         key={msg.id}
         message={msg}
-        isLastUserMessage={
-          msg.role === "user" &&
-          session.messages.filter((m) => m.role === "user").slice(-1)[0]?.id === msg.id
-        }
+        isLastUserMessage={msg.role === "user" && msg.id === lastUserMsgId}
         isStreaming={isStreaming}
       />
     );
