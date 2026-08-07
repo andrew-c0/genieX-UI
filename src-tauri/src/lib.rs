@@ -1,18 +1,33 @@
 mod commands;
 
+pub mod entities;
+pub mod migrations;
+
 use tauri::Manager;
 use commands::models;
 use commands::server;
 use commands::chat;
+use commands::database;
 
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .plugin(
-            tauri_plugin_sql::Builder::default()
-                .add_migrations("sqlite:geniex.db", vec![commands::database::migration(), commands::database::migration_v2()])
-                .build(),
-        )
+        .setup(|app| {
+            // Resolve DB path in the app data directory.
+            let db_dir = app
+                .path()
+                .app_data_dir()
+                .expect("failed to resolve app data dir");
+            std::fs::create_dir_all(&db_dir).ok();
+            let db_path = db_dir.join("geniex.db");
+            let db_url = format!("sqlite:{}?mode=rwc", db_path.display());
+
+            let db = tauri::async_runtime::block_on(database::init_database(&db_url))
+                .expect("failed to initialise database");
+
+            app.manage(db);
+            Ok(())
+        })
         .manage(commands::AppState::default())
         .invoke_handler(tauri::generate_handler![
             // Model management
@@ -28,6 +43,16 @@ pub fn run() {
             chat::chat_completion,
             chat::load_model,
             chat::unload_all_models,
+            // Database
+            database::load_sessions,
+            database::save_session,
+            database::delete_session,
+            database::save_message,
+            database::delete_message,
+            database::load_model_settings,
+            database::save_model_settings,
+            database::get_preference,
+            database::set_preference,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {

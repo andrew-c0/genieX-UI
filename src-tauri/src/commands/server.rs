@@ -59,7 +59,13 @@ pub async fn start_server(
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
-        .map_err(|e| format!("Failed to start `geniex serve`: {e}"))?;
+        .map_err(|e| {
+            if e.kind() == std::io::ErrorKind::NotFound {
+                "GenieX CLI not found. Ensure `geniex` is installed and in your PATH.".to_string()
+            } else {
+                format!("Failed to start `geniex serve`: {e}")
+            }
+        })?;
 
     let pid = child.id().unwrap_or(0);
 
@@ -103,8 +109,16 @@ pub async fn start_server(
         let _ = app_handle2.emit("server-stopped", ());
     });
 
-    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+    // Poll for readiness instead of a fixed sleep.
+    // The server may take varying amounts of time to bind the port.
+    for _ in 0..15 {
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        if probe_server(serve_port).await {
+            return get_server_status(state, port).await;
+        }
+    }
 
+    // Timed out — still report current status (may be running but slow)
     get_server_status(state, port).await
 }
 

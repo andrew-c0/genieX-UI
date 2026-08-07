@@ -5,21 +5,18 @@ import {
   DrawerBody,
   DrawerHeader,
   DrawerHeaderTitle,
-  Tab,
-  TabList,
 } from "@fluentui/react-components";
 import { DismissRegular } from "@fluentui/react-icons";
 import AppSettings from "./AppSettings";
 import ModelSettings from "./ModelSettings";
 
 interface SettingsDrawerProps {
+  defaultTab?: "app" | "model";
   onClose: () => void;
 }
 
-type SettingsTab = "app" | "model";
-
-export default function SettingsDrawer({ onClose }: SettingsDrawerProps) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("app");
+export default function SettingsDrawer({ defaultTab = "app", onClose }: SettingsDrawerProps) {
+  const [activeTab] = useState(defaultTab);
 
   return (
     <Drawer
@@ -34,18 +31,10 @@ export default function SettingsDrawer({ onClose }: SettingsDrawerProps) {
             <Button appearance="transparent" icon={<DismissRegular />} onClick={onClose} />
           }
         >
-          Settings
+          {activeTab === "app" ? "App Settings" : "Model Settings"}
         </DrawerHeaderTitle>
       </DrawerHeader>
       <DrawerBody style={{ padding: 0 }}>
-        <TabList
-          selectedValue={activeTab}
-          onTabSelect={(_, data) => setActiveTab(data.value as SettingsTab)}
-          style={{ padding: "0 16px", borderBottom: "1px solid #2a2a4a" }}
-        >
-          <Tab value="app">App</Tab>
-          <Tab value="model">Model</Tab>
-        </TabList>
         <div style={{ padding: 16 }}>
           {activeTab === "app" && <AppSettings />}
           {activeTab === "model" && <ModelSettings />}

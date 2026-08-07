@@ -18,6 +18,7 @@ export default function ChatInput() {
   const setStreaming = useChatStore((s) => s.setStreaming);
   const serverStatus = useModelStore((s) => s.serverStatus);
   const serverPort = useModelStore((s) => s.serverPort);
+  const activeModelId = useModelStore((s) => s.activeModelId);
   const retryFromMessageId = useChatStore((s) => s.retryFromMessageId);
   const setRetryFromMessageId = useChatStore((s) => s.setRetryFromMessageId);
 
@@ -27,7 +28,7 @@ export default function ChatInput() {
   const contextChars = activeSession?.contextChars ?? 0;
   const maxContextChars = 8192;
 
-  /** Core send logic — auto-detects model from server. */
+  /** Core send logic — uses activeModelId from the model store. */
   const doSend = useCallback(
     async (
       sessionId: string,
@@ -36,8 +37,7 @@ export default function ChatInput() {
       setStreaming(true);
       lastSendTime = Date.now();
 
-      const session = useChatStore.getState().sessions.find((s) => s.id === sessionId);
-      const rawModelId = session?.modelId ?? null;
+      const rawModelId = useModelStore.getState().activeModelId;
 
       try {
         let settings = { ...defaultSettings };

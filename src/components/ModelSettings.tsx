@@ -5,32 +5,42 @@ import {
   Switch,
   Spinner,
   Divider,
+  Dropdown,
+  Option,
   Toast,
   ToastTitle,
   useToastController,
 } from "@fluentui/react-components";
 import { SaveRegular } from "@fluentui/react-icons";
 import { useModelStore, defaultSettings } from "../stores/modelStore";
-import { useChatStore } from "../stores/chatStore";
 import * as db from "../services/database";
 import type { GenerationSettings } from "../types";
 
 export default function ModelSettings() {
   const { dispatchToast } = useToastController("app-toaster");
-  const activeSessionId = useChatStore((s) => s.activeSessionId);
-  const sessions = useChatStore((s) => s.sessions);
-  const activeSession = sessions.find((s) => s.id === activeSessionId);
-  const loadedModel = activeSession?.modelId ?? null;
+  const activeModelId = useModelStore((s) => s.activeModelId);
+  const downloadedModels = useModelStore((s) => s.models);
+
+  // Local model selection — defaults to the active model
+  const [selectedModel, setSelectedModel] = useState<string | null>(activeModelId);
+  const displayModel = selectedModel ?? activeModelId;
+
+  // Keep in sync when activeModelId changes externally (e.g. model loaded)
+  useEffect(() => {
+    if (activeModelId && !selectedModel) {
+      setSelectedModel(activeModelId);
+    }
+  }, [activeModelId]);
 
   const [settings, setSettings] = useState<GenerationSettings>({
     ...defaultSettings,
   });
   const [saving, setSaving] = useState(false);
 
-  // Load saved settings for the current model
+  // Load saved settings whenever the selected model changes
   useEffect(() => {
-    if (!loadedModel) return;
-    db.loadModelSettings(loadedModel)
+    if (!displayModel) return;
+    db.loadModelSettings(displayModel)
       .then((saved) => {
         if (saved) {
           setSettings({ ...defaultSettings, ...JSON.parse(saved) });
@@ -39,14 +49,14 @@ export default function ModelSettings() {
         }
       })
       .catch(() => {});
-  }, [loadedModel]);
+  }, [displayModel]);
 
   const handleSave = useCallback(async () => {
-    if (!loadedModel) return;
+    if (!displayModel) return;
     setSaving(true);
     let saved = false;
     try {
-      await db.saveModelSettings(loadedModel, JSON.stringify(settings));
+      await db.saveModelSettings(displayModel, JSON.stringify(settings));
       saved = true;
     } catch (err) {
       console.error("Failed to save model settings:", err);
@@ -60,7 +70,7 @@ export default function ModelSettings() {
         { intent: "success" }
       );
     }
-  }, [loadedModel, settings, dispatchToast]);
+  }, [displayModel, settings, dispatchToast]);
 
   const update = <K extends keyof GenerationSettings>(
     key: K,
@@ -69,19 +79,44 @@ export default function ModelSettings() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  if (!loadedModel) {
+  if (!displayModel) return null;
+
+  if (downloadedModels.length === 0 && !displayModel) {
     return (
       <div style={{ color: "#8888a8", padding: "24px 0", textAlign: "center", fontSize: 13 }}>
-        No model loaded. Load a model to configure generation settings.
+        No models downloaded. Pull a model first.
       </div>
     );
   }
 
   return (
     <>
-      <div style={{ marginBottom: 16, fontSize: 13, color: "#b0b0c8" }}>
-        Model: <strong>{loadedModel}</strong>
-      </div>
+      {/* ── Model Picker ────────────────────────── */}
+      {downloadedModels.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: "#8888a8", marginBottom: 4 }}>Model</div>
+          <Dropdown
+            value={displayModel ?? "Select a model…"}
+            selectedOptions={displayModel ? [displayModel] : []}
+            onOptionSelect={(_, data) => {
+              if (data.optionValue) setSelectedModel(data.optionValue);
+            }}
+            style={{ width: "100%" }}
+          >
+            {downloadedModels.map((m) => (
+              <Option key={m.name} value={m.name}>
+                {m.name}
+              </Option>
+            ))}
+          </Dropdown>
+        </div>
+      )}
+
+      {displayModel && activeModelId && displayModel !== activeModelId && (
+        <div style={{ marginBottom: 12, fontSize: 12, color: "#f39c12" }}>
+          ⚠ Editing settings for a model not currently loaded on the server.
+        </div>
+      )}
 
       {/* ── Sampler Settings ────────────────────── */}
       <div className="settings-section">

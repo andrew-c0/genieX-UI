@@ -1,23 +1,17 @@
-import React, { useMemo } from "react";
+import React from "react";
 import {
+  Badge,
   Button,
   Tooltip,
-  Badge,
 } from "@fluentui/react-components";
-import {
-  SettingsRegular,
-  PlugConnectedRegular,
-  PlugDisconnectedRegular,
-  ArrowDownloadRegular,
-} from "@fluentui/react-icons";
+import { ArrowLeftRegular } from "@fluentui/react-icons";
 import { useModelStore } from "../stores/modelStore";
 
 interface HeaderProps {
-  onOpenSettings: () => void;
-  onOpenModelBrowser: () => void;
+  onOpenModelSettings: () => void;
 }
 
-export default function Header({ onOpenSettings, onOpenModelBrowser }: HeaderProps) {
+export default function Header({ onOpenModelSettings }: HeaderProps) {
   const serverStatus = useModelStore((s) => s.serverStatus);
   const downloads = useModelStore((s) => s.downloads);
 
@@ -49,18 +43,11 @@ export default function Header({ onOpenSettings, onOpenModelBrowser }: HeaderPro
       </div>
 
       <div className="main-header-right">
-        <Tooltip content="Download models" relationship="label">
+        <Tooltip content="Model settings" relationship="label">
           <Button
             appearance="subtle"
-            icon={<ArrowDownloadRegular />}
-            onClick={onOpenModelBrowser}
-          />
-        </Tooltip>
-        <Tooltip content="Settings" relationship="label">
-          <Button
-            appearance="subtle"
-            icon={<SettingsRegular />}
-            onClick={onOpenSettings}
+            icon={<ArrowLeftRegular />}
+            onClick={onOpenModelSettings}
           />
         </Tooltip>
       </div>

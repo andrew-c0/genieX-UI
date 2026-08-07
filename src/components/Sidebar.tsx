@@ -27,10 +27,10 @@ import ModelSelector from "./ModelSelector";
 
 interface SidebarProps {
   onOpenModelBrowser: () => void;
-  onOpenSettings: () => void;
+  onOpenAppSettings: () => void;
 }
 
-export default function Sidebar({ onOpenModelBrowser, onOpenSettings }: SidebarProps) {
+export default function Sidebar({ onOpenModelBrowser, onOpenAppSettings }: SidebarProps) {
   const sessions = useChatStore((s) => s.sessions);
   const activeSessionId = useChatStore((s) => s.activeSessionId);
   const createSession = useChatStore((s) => s.createSession);
@@ -140,7 +140,7 @@ export default function Sidebar({ onOpenModelBrowser, onOpenSettings }: SidebarP
           appearance="subtle"
           size="small"
           icon={<SettingsRegular />}
-          onClick={onOpenSettings}
+          onClick={onOpenAppSettings}
           style={{ flex: 1 }}
         >
           Settings

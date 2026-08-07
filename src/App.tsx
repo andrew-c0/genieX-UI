@@ -29,7 +29,7 @@ export default function App() {
   const setServerPort = useModelStore((s) => s.setServerPort);
 
   const [showModelBrowser, setShowModelBrowser] = React.useState(false);
-  const [showSettings, setShowSettings] = React.useState(false);
+  const [settingsTab, setSettingsTab] = React.useState<"app" | "model" | null>(null);
 
   // Track token count for stats
   const tokenCountRef = useRef(0);
@@ -40,9 +40,10 @@ export default function App() {
     (async () => {
       try {
         const saved = await db.loadSessions();
+        console.log(`[init] Loaded ${saved.length} sessions from DB`);
         loadSessions(saved);
-      } catch {
-        // DB may not be ready on first run — that's fine
+      } catch (err) {
+        console.error("[init] Failed to load sessions:", err);
       }
       try {
         const models = await geniex.listModels();
@@ -65,6 +66,15 @@ export default function App() {
         // ignore
       }
     })();
+  }, []);
+
+  // ── Listen for server crash (process exited unexpectedly) ──────
+  useEffect(() => {
+    const unlisten = listen("server-stopped", () => {
+      console.warn("[app] Server process exited unexpectedly");
+      setServerStatus({ running: false, port: useModelStore.getState().serverPort, models: [] });
+    });
+    return () => { unlisten.then((fn) => fn()); };
   }, []);
 
   // ── Persist active session to DB whenever it changes ──────────
@@ -210,13 +220,10 @@ export default function App() {
     <div className="app-layout">
       <Sidebar
         onOpenModelBrowser={() => setShowModelBrowser(true)}
-        onOpenSettings={() => setShowSettings(true)}
+        onOpenAppSettings={() => setSettingsTab("app")}
       />
       <div className="main-area">
-        <Header
-          onOpenSettings={() => setShowSettings(true)}
-          onOpenModelBrowser={() => setShowModelBrowser(true)}
-        />
+        <Header onOpenModelSettings={() => setSettingsTab("model")} />
         {activeSession ? <ChatArea /> : <WelcomeScreen />}
         {activeSession && <ChatInput />}
       </div>
@@ -224,8 +231,8 @@ export default function App() {
       {showModelBrowser && (
         <ModelBrowser onClose={() => setShowModelBrowser(false)} />
       )}
-      {showSettings && (
-        <SettingsDrawer onClose={() => setShowSettings(false)} />
+      {settingsTab && (
+        <SettingsDrawer defaultTab={settingsTab} onClose={() => setSettingsTab(null)} />
       )}
       <Toaster toasterId="app-toaster" />
     </div>

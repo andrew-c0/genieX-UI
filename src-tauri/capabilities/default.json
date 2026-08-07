@@ -19,10 +19,6 @@
       "allow": [
         { "name": "geniex", "sidecar": false }
       ]
-    },
-    "sql:default",
-    "sql:allow-load",
-    "sql:allow-execute",
-    "sql:allow-select"
+    }
   ]
 }

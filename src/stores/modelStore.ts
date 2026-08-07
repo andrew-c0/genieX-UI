@@ -16,10 +16,13 @@ interface ModelState {
   downloads: DownloadProgress[];
   searchResults: SearchModel[];
   isSearching: boolean;
+  /** The model currently loaded on the server — single source of truth. */
+  activeModelId: string | null;
 
   setModels: (models: ModelInfo[]) => void;
   setServerStatus: (status: ServerStatus) => void;
   setServerPort: (port: number) => void;
+  setActiveModel: (modelId: string | null) => void;
   addDownload: (progress: DownloadProgress) => void;
   removeDownload: (model: string) => void;
   setSearchResults: (results: SearchModel[]) => void;
@@ -33,13 +36,24 @@ export const useModelStore = create<ModelState>((set) => ({
   downloads: [],
   searchResults: [],
   isSearching: false,
+  activeModelId: null,
 
   setModels: (models) => set({ models }),
-  setServerStatus: (status) => set({ serverStatus: status }),
+  setServerStatus: (status) => set((state) => {
+    // Auto-sync activeModelId when server status changes
+    const firstModel = status.models.length > 0 ? status.models[0] : null;
+    const activeModelId = firstModel
+      ? (state.activeModelId && status.models.includes(state.activeModelId)
+          ? state.activeModelId  // keep current if still loaded
+          : firstModel)          // otherwise fall back to first loaded
+      : null;                     // nothing loaded → clear
+    return { serverStatus: status, activeModelId };
+  }),
   setServerPort: (port) => set((state) => ({
     serverPort: port,
     serverStatus: { ...state.serverStatus, port },
   })),
+  setActiveModel: (modelId) => set({ activeModelId: modelId }),
   addDownload: (progress) =>
     set((state) => ({
       downloads: [

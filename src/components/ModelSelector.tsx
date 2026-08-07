@@ -20,6 +20,7 @@ export default function ModelSelector() {
   const models = useModelStore((s) => s.models);
   const serverStatus = useModelStore((s) => s.serverStatus);
   const setServerStatus = useModelStore((s) => s.setServerStatus);
+  const setActiveModel = useModelStore((s) => s.setActiveModel);
   const serverPort = useModelStore((s) => s.serverPort);
   const activeSessionId = useChatStore((s) => s.activeSessionId);
   const setSessionModel = useChatStore((s) => s.setSessionModel);
@@ -46,7 +47,11 @@ export default function ModelSelector() {
     try {
       const status = await geniex.startServer(serverPort);
       setServerStatus(status);
-      return status.running;
+      if (!status.running) {
+        setError("Server started but is not responding yet. Try again in a moment.");
+        return false;
+      }
+      return true;
     } catch (err) {
       setError(String(err));
       return false;
@@ -70,6 +75,7 @@ export default function ModelSelector() {
 
         const refreshed = await geniex.loadModel(bareName, `http://127.0.0.1:${serverPort}`);
         setServerStatus(refreshed);
+        setActiveModel(bareName);
 
         if (activeSessionId) {
           setSessionModel(activeSessionId, bareName);
@@ -80,7 +86,7 @@ export default function ModelSelector() {
         setLoadingModel(null);
       }
     },
-    [activeSessionId, ensureServer, setServerStatus, setSessionModel, serverPort],
+    [activeSessionId, ensureServer, setServerStatus, setActiveModel, setSessionModel, serverPort],
   );
 
   /** Stop server (unloads all models). */
@@ -104,6 +110,9 @@ export default function ModelSelector() {
     try {
       const status = await geniex.startServer(serverPort);
       setServerStatus(status);
+      if (!status.running) {
+        setError("Server did not start. Check that `geniex` is in your PATH and the port is available.");
+      }
     } catch (err) {
       setError(String(err));
     } finally {
@@ -241,7 +250,6 @@ export default function ModelSelector() {
                     appearance="primary"
                     size="small"
                     onClick={() => handleLoad(model.name)}
-                    disabled={!serverStatus.running}
                     style={{ minWidth: 0, padding: "2px 8px", fontSize: 11 }}
                   >
                     Load

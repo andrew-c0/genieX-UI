@@ -1,56 +1,267 @@
-use tauri_plugin_sql::{Migration, MigrationKind};
+use sea_orm::prelude::*;
+use sea_orm::{
+    ColumnTrait, Database, DatabaseBackend, DatabaseConnection, EntityTrait,
+    QueryFilter, QueryOrder, Set, Statement,
+};
+use sea_orm::sea_query::{Expr, OnConflict};
+use sea_orm_migration::MigratorTrait;
+use serde::{Deserialize, Serialize};
 
-/// Returns the SQLite migrations for the initial schema and upgrades.
-pub fn migration() -> Migration {
-    Migration {
-        version: 1,
-        description: "create_initial_tables",
-        sql: "
-            CREATE TABLE IF NOT EXISTS chat_sessions (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                model_id TEXT,
-                context_chars INTEGER NOT NULL DEFAULT 0,
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL
-            );
+use crate::entities::{chat_session, message, model_setting, user_preference};
+use crate::migrations::Migrator;
 
-            CREATE TABLE IF NOT EXISTS messages (
-                id TEXT PRIMARY KEY,
-                session_id TEXT NOT NULL,
-                role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'system')),
-                content TEXT NOT NULL,
-                model_id TEXT,
-                created_at INTEGER NOT NULL,
-                FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
-            );
+// ─── Types ─────────────────────────────────────────────────────────
 
-            CREATE TABLE IF NOT EXISTS model_settings (
-                model_id TEXT PRIMARY KEY,
-                settings TEXT NOT NULL,
-                updated_at INTEGER NOT NULL
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id);
-            CREATE INDEX IF NOT EXISTS idx_sessions_updated ON chat_sessions(updated_at DESC);
-        ",
-        kind: MigrationKind::Up,
-    }
+/// Full session with messages — returned to the frontend.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatSessionWithMessages {
+    #[serde(flatten)]
+    pub session: chat_session::Model,
+    pub messages: Vec<message::Model>,
 }
 
-pub fn migration_v2() -> Migration {
-    Migration {
-        version: 2,
-        description: "create_user_preferences",
-        sql: "
-            CREATE TABLE IF NOT EXISTS user_preferences (
-                key TEXT PRIMARY KEY,
-                value TEXT NOT NULL,
-                type TEXT NOT NULL DEFAULT 'string'
-            );
-        ",
-        kind: MigrationKind::Up,
+// ─── Initialisation ────────────────────────────────────────────────
+
+pub async fn init_database(db_path: &str) -> Result<DatabaseConnection, String> {
+    let db = Database::connect(db_path)
+        .await
+        .map_err(|e| format!("Failed to open database: {e}"))?;
+
+    // Enable foreign keys for SQLite (per-connection).
+    db.execute(Statement::from_string(
+        DatabaseBackend::Sqlite,
+        "PRAGMA foreign_keys = ON".to_owned(),
+    ))
+    .await
+    .map_err(|e| format!("Failed to enable foreign keys: {e}"))?;
+
+    // Apply all pending migrations (with up/down support).
+    Migrator::up(&db, None)
+        .await
+        .map_err(|e| format!("Failed to run migrations: {e}"))?;
+
+    Ok(db)
+}
+
+// ─── Sessions ──────────────────────────────────────────────────────
+
+#[tauri::command]
+pub async fn load_sessions(
+    db: tauri::State<'_, DatabaseConnection>,
+) -> Result<Vec<ChatSessionWithMessages>, String> {
+    let sessions = chat_session::Entity::find()
+        .order_by_desc(chat_session::Column::UpdatedAt)
+        .all(&*db)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let mut result = Vec::with_capacity(sessions.len());
+    for s in sessions {
+        let messages = message::Entity::find()
+            .filter(message::Column::SessionId.eq(&s.id))
+            .order_by_asc(message::Column::CreatedAt)
+            .all(&*db)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        result.push(ChatSessionWithMessages {
+            session: s,
+            messages,
+        });
     }
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn save_session(
+    db: tauri::State<'_, DatabaseConnection>,
+    session: chat_session::Model,
+) -> Result<(), String> {
+    chat_session::Entity::insert(chat_session::ActiveModel {
+        id: Set(session.id),
+        title: Set(session.title),
+        model_id: Set(session.model_id),
+        context_chars: Set(session.context_chars),
+        created_at: Set(session.created_at),
+        updated_at: Set(session.updated_at),
+    })
+    .on_conflict(
+        OnConflict::column(chat_session::Column::Id)
+            .update_columns([
+                chat_session::Column::Title,
+                chat_session::Column::ModelId,
+                chat_session::Column::ContextChars,
+                chat_session::Column::CreatedAt,
+                chat_session::Column::UpdatedAt,
+            ])
+            .to_owned(),
+    )
+    .exec(&*db)
+    .await
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn delete_session(
+    db: tauri::State<'_, DatabaseConnection>,
+    id: String,
+) -> Result<(), String> {
+    message::Entity::delete_many()
+        .filter(message::Column::SessionId.eq(&id))
+        .exec(&*db)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    chat_session::Entity::delete_by_id(&id)
+        .exec(&*db)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ─── Messages ──────────────────────────────────────────────────────
+
+#[tauri::command]
+pub async fn save_message(
+    db: tauri::State<'_, DatabaseConnection>,
+    session_id: String,
+    message: message::Model,
+) -> Result<(), String> {
+    message::Entity::insert(message::ActiveModel {
+        id: Set(message.id),
+        session_id: Set(session_id.clone()),
+        role: Set(message.role),
+        content: Set(message.content),
+        model_id: Set(message.model_id),
+        created_at: Set(message.created_at),
+    })
+    .on_conflict(
+        OnConflict::column(message::Column::Id)
+            .update_columns([
+                message::Column::SessionId,
+                message::Column::Role,
+                message::Column::Content,
+                message::Column::ModelId,
+                message::Column::CreatedAt,
+            ])
+            .to_owned(),
+    )
+    .exec(&*db)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    // Touch the session's updated_at timestamp.
+    let now = now_millis();
+    chat_session::Entity::update_many()
+        .col_expr(chat_session::Column::UpdatedAt, Expr::value(now))
+        .filter(chat_session::Column::Id.eq(&session_id))
+        .exec(&*db)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn delete_message(
+    db: tauri::State<'_, DatabaseConnection>,
+    id: String,
+) -> Result<(), String> {
+    message::Entity::delete_by_id(&id)
+        .exec(&*db)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ─── Model Settings ────────────────────────────────────────────────
+
+#[tauri::command]
+pub async fn load_model_settings(
+    db: tauri::State<'_, DatabaseConnection>,
+    model_id: String,
+) -> Result<Option<String>, String> {
+    let result = model_setting::Entity::find_by_id(&model_id)
+        .one(&*db)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(result.map(|r| r.settings))
+}
+
+#[tauri::command]
+pub async fn save_model_settings(
+    db: tauri::State<'_, DatabaseConnection>,
+    model_id: String,
+    settings: String,
+) -> Result<(), String> {
+    let now = now_millis();
+    model_setting::Entity::insert(model_setting::ActiveModel {
+        model_id: Set(model_id),
+        settings: Set(settings),
+        updated_at: Set(now),
+    })
+    .on_conflict(
+        OnConflict::column(model_setting::Column::ModelId)
+            .update_columns([
+                model_setting::Column::Settings,
+                model_setting::Column::UpdatedAt,
+            ])
+            .to_owned(),
+    )
+    .exec(&*db)
+    .await
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ─── User Preferences ──────────────────────────────────────────────
+
+#[tauri::command]
+pub async fn get_preference(
+    db: tauri::State<'_, DatabaseConnection>,
+    key: String,
+) -> Result<Option<String>, String> {
+    let result = user_preference::Entity::find_by_id(&key)
+        .one(&*db)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(result.map(|r| r.value))
+}
+
+#[tauri::command]
+pub async fn set_preference(
+    db: tauri::State<'_, DatabaseConnection>,
+    key: String,
+    value: String,
+    pref_type: String,
+) -> Result<(), String> {
+    user_preference::Entity::insert(user_preference::ActiveModel {
+        key: Set(key),
+        value: Set(value),
+        pref_type: Set(pref_type),
+    })
+    .on_conflict(
+        OnConflict::column(user_preference::Column::Key)
+            .update_columns([
+                user_preference::Column::Value,
+                user_preference::Column::PrefType,
+            ])
+            .to_owned(),
+    )
+    .exec(&*db)
+    .await
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────
+
+fn now_millis() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as i64
 }
 
 

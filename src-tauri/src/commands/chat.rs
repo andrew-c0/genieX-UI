@@ -84,6 +84,13 @@ pub async fn load_model(
 
     eprintln!("[load] loading model '{}' (stripped: '{}')", model, clean_model);
 
+    // Parse port from the base URL for the returned status
+    let port: u16 = resolved_base
+        .rsplit(':')
+        .next()
+        .and_then(|s| s.parse::<u16>().ok())
+        .unwrap_or(18181);
+
     let url = format!("{}/v1/chat/completions", resolved_base);
     let body = serde_json::json!({
         "model": clean_model,
@@ -122,7 +129,7 @@ pub async fn load_model(
         .map_err(|e| format!("Failed to fetch models: {e}"))?;
 
     let body: serde_json::Value = status_resp.json().await.unwrap_or_default();
-    let models = body["data"]
+    let models: Vec<String> = body["data"]
         .as_array()
         .map(|arr| {
             arr.iter()
@@ -131,9 +138,20 @@ pub async fn load_model(
         })
         .unwrap_or_default();
 
+    // Verify the model actually appears in the loaded list
+    let found = models.iter().any(|m| {
+        m == clean_model || m.starts_with(&format!("{}:", clean_model))
+    });
+    if !found {
+        return Err(format!(
+            "Model '{}' does not appear loaded on the server. Loaded models: {:?}",
+            clean_model, models
+        ));
+    }
+
     Ok(super::server::ServerStatus {
         running: true,
-        port: 18181,
+        port,
         models,
     })
 }

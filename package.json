@@ -17,7 +17,6 @@
     "@fluentui/react-icons": "^2.0.296",
     "@tauri-apps/api": "^2.5.0",
     "@tauri-apps/plugin-shell": "^2.2.2",
-    "@tauri-apps/plugin-sql": "^2.2.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",

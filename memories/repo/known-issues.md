@@ -10,6 +10,14 @@
 - Correct API: `dispatchToast(<Toast><ToastTitle>...</ToastTitle></Toast>, { intent: "success" })`
 - Root cause of non-display is still unresolved — possibly Drawer overlay or Toaster portal context issue
 
+## Session Persistence Bug (FIXED 2026-07-30)
+
+- `saveSession` used `INSERT OR REPLACE` which in SQLite = `DELETE + INSERT`
+- `messages` table has `FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE`
+- Every `saveSession` call was cascading and wiping all messages for that session
+- Fix: changed to `INSERT ... ON CONFLICT(id) DO UPDATE SET ...` which upserts without triggering CASCADE
+- Same fix applied to `saveMessage` for consistency
+
 ## Settings Drawer File Overwrite
 
 - PowerShell `Set-Content` with here-string (`@'...'@`) was needed to overwrite `SettingsDrawer.tsx`
