@@ -1,70 +1,9 @@
-use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, State};
 
-/// A single message in the chat.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChatMessage {
-    pub role: String,
-    pub content: String,
-}
-
-/// Sampler / generation settings.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GenerationSettings {
-    pub temperature: Option<f64>,
-    pub top_p: Option<f64>,
-    pub top_k: Option<u32>,
-    pub min_p: Option<f64>,
-    pub repetition_penalty: Option<f64>,
-    pub max_tokens: Option<u32>,
-    pub nctx: Option<u32>,
-    pub system_prompt: Option<String>,
-    pub think: Option<bool>,
-}
-
-/// Strip precision suffix from a model name.
-/// e.g. "qualcomm/Qwen3-4B-Instruct-2507:W4A16" -> "qualcomm/Qwen3-4B-Instruct-2507"
-fn strip_precision(name: &str) -> &str {
-    match name.rfind(':') {
-        Some(pos) => &name[..pos],
-        None => name,
-    }
-}
-
-/// Resolve the model name to send to the server.
-/// The chat server expects "org/repo" WITHOUT precision suffix.
-fn resolve_model_for_server(model: Option<&str>) -> Option<String> {
-    match model {
-        Some(m) if !m.is_empty() => {
-            let clean = strip_precision(m);
-            eprintln!("[chat] model resolved: input={:?} -> clean={}", m, clean);
-            Some(clean.to_string())
-        }
-        _ => {
-            eprintln!("[chat] no model provided or empty string");
-            None
-        }
-    }
-}
-
-/// Fetch the first loaded model from the server's /v1/models endpoint.
-async fn fetch_first_loaded_model(client: &reqwest::Client, base_url: &str) -> Option<String> {
-    let url = format!("{}/v1/models", base_url);
-    let resp = client.get(&url).send().await.ok()?;
-    let body: serde_json::Value = resp.json().await.ok()?;
-
-    let model_id = body["data"]
-        .as_array()?
-        .first()?
-        .get("id")?
-        .as_str()?
-        .to_string();
-
-    eprintln!("[chat] fetched loaded model from server: {}", model_id);
-    // The /v1/models returns with precision, strip it
-    Some(strip_precision(&model_id).to_string())
-}
+use super::chat_helpers::{
+    build_chat_body, fetch_first_loaded_model, resolve_model_for_server, strip_precision,
+    ChatMessage, GenerationSettings,
+};
 
 /// Load a model into the GenieX server by sending a minimal chat request.
 /// The server loads models on-demand; this warmup triggers that loading.
@@ -204,11 +143,6 @@ pub async fn chat_completion(
         }
     }
 
-    let mut body = serde_json::json!({
-        "messages": messages_json,
-        "stream": true,
-    });
-
     // Resolve model name — strip precision if present, or auto-detect from server
     let model_name = match resolve_model_for_server(model.as_deref()) {
         Some(name) => Some(name),
@@ -216,31 +150,12 @@ pub async fn chat_completion(
     };
 
     if let Some(ref m) = model_name {
-        body["model"] = serde_json::json!(m);
         eprintln!("[chat] sending model '{}' to server", m);
     } else {
         eprintln!("[chat] WARNING: no model resolved");
     }
 
-    // Add optional sampling parameters
-    if let Some(t) = settings.temperature {
-        body["temperature"] = serde_json::json!(t);
-    }
-    if let Some(tp) = settings.top_p {
-        body["top_p"] = serde_json::json!(tp);
-    }
-    if let Some(tk) = settings.top_k {
-        body["top_k"] = serde_json::json!(tk);
-    }
-    if let Some(mp) = settings.min_p {
-        body["min_p"] = serde_json::json!(mp);
-    }
-    if let Some(rp) = settings.repetition_penalty {
-        body["repetition_penalty"] = serde_json::json!(rp);
-    }
-    if let Some(mt) = settings.max_tokens {
-        body["max_tokens"] = serde_json::json!(mt);
-    }
+    let body = build_chat_body(messages_json, model_name, &settings);
 
     let response = state
         .http_client

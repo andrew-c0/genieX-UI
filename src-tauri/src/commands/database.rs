@@ -283,6 +283,6 @@ pub async fn set_preference(
 fn now_millis() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
+        .expect("system time before UNIX epoch")
         .as_millis() as i64
 }

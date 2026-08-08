@@ -1,4 +1,5 @@
 pub mod chat;
+pub mod chat_helpers;
 pub mod constants;
 pub mod database;
 pub mod models;

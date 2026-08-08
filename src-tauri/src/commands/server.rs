@@ -38,7 +38,7 @@ pub async fn start_server(
     // Check if we have a tracked process
     {
         let is_running = {
-            let proc = state.server_process.lock().unwrap();
+            let proc = state.server_process.lock().expect("mutex poisoned");
             proc.is_some()
         };
         if is_running {
@@ -65,7 +65,7 @@ pub async fn start_server(
     let pid = child.id().unwrap_or(0);
 
     {
-        let mut proc = state.server_process.lock().unwrap();
+        let mut proc = state.server_process.lock().expect("mutex poisoned");
         *proc = Some(pid);
     }
 
@@ -122,7 +122,7 @@ pub async fn start_server(
 pub async fn stop_server(state: State<'_, AppState>, port: Option<u16>) -> Result<ServerStatus, String> {
     let serve_port = port.unwrap_or(super::constants::DEFAULT_PORT);
     let pid = {
-        let mut proc = state.server_process.lock().unwrap();
+        let mut proc = state.server_process.lock().expect("mutex poisoned");
         proc.take()
     };
 
