@@ -51,7 +51,7 @@ export default function Sidebar({ onOpenModelBrowser, onOpenAppSettings }: Sideb
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">GX</div>
           <div>
-            <h1>GenieX-UI</h1>
+            <h1>LocalGenie</h1>
             <span>Qualcomm AI Hub</span>
           </div>
         </div>

@@ -1,4 +1,4 @@
-# genieX-UI Repository Notes
+# LocalGenie Repository Notes
 
 ## Architecture
 - **Tauri 2** desktop app: Rust backend + React/TypeScript frontend

@@ -197,7 +197,7 @@ pub async fn search_models(query: String) -> Result<Vec<SearchModel>, String> {
     let client = reqwest::Client::new();
     let resp = client
         .get(&url)
-        .header("User-Agent", "GenieX-UI/0.1")
+        .header("User-Agent", "LocalGenie/0.1")
         .send()
         .await
         .map_err(|e| format!("HF API request failed: {e}"))?;

@@ -1,8 +1,8 @@
-# GenieX-UI — Project Documentation
+# LocalGenie — Project Documentation
 
 ## What the App Is Supposed to Do
 
-GenieX-UI is a **desktop GUI for Qualcomm's GenieX CLI**, designed to be an [LM Studio](https://lmstudio.ai/)-like interface for running local LLMs and VLMs on Qualcomm hardware (Snapdragon X Elite / Plus with Hexagon NPU, Adreno GPU, or CPU).
+LocalGenie is a **desktop GUI for Qualcomm's GenieX CLI**, designed to be an [LM Studio](https://lmstudio.ai/)-like interface for running local LLMs and VLMs on Qualcomm hardware (Snapdragon X Elite / Plus with Hexagon NPU, Adreno GPU, or CPU).
 
 The envisioned workflow:
 
@@ -48,7 +48,7 @@ In short: a polished, self-contained desktop app that makes it trivial to run fr
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        GenieX-UI Desktop                        │
+│                        LocalGenie Desktop                        │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─── Frontend (React 19 + TypeScript) ──────────────────────┐  │
@@ -102,7 +102,7 @@ In short: a polished, self-contained desktop app that makes it trivial to run fr
 ## Folder Structure
 
 ```
-genieX-UI/
+LocalGenie/
 ├── .github/
 │   └── github-instructions.md    ← This file
 ├── src/                           ← React frontend

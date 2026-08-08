@@ -79,5 +79,5 @@ pub fn run() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running GenieX-UI");
+        .expect("error while running LocalGenie");
 }

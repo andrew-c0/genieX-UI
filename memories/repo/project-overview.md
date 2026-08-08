@@ -1,4 +1,4 @@
-# GenieX-UI — Project Quick Reference
+# LocalGenie — Project Quick Reference
 
 - **Stack**: Tauri 2 + React 19 + TypeScript + Fluent UI v9 + Zustand 5 + SQLite (sqlx)
 - **Rust backend**: src-tauri/src/commands/ (chat.rs, server.rs, models.rs, database.rs)

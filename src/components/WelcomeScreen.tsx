@@ -17,7 +17,7 @@ export default function WelcomeScreen() {
   return (
     <div className="welcome-screen">
       <div className="welcome-icon">GX</div>
-      <h2 className="welcome-title">Welcome to GenieX-UI</h2>
+      <h2 className="welcome-title">Welcome to LocalGenie</h2>
       <p className="welcome-subtitle">
         Run frontier LLMs and VLMs locally on your Qualcomm device.
         {models.length === 0 && (

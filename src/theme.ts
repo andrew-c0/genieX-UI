@@ -25,7 +25,7 @@ const baseTheme = createDarkTheme(brandVariants);
  * Custom dark theme inspired by LM Studio's aesthetic.
  * Based on Fluent UI's webDarkTheme with adjusted tokens.
  */
-export const genieXTheme: Theme = {
+export const localGenieTheme: Theme = {
   ...baseTheme,
   // Override specific theme tokens
   colorBrandBackground: "#6C63FF",

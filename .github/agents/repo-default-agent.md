@@ -1,4 +1,4 @@
-# repo-default-agent.md — GenieX-UI Coding Guidelines
+# repo-default-agent.md — LocalGenie Coding Guidelines
 
 > Living document for all AI agents and contributors. Follow these rules for every
 > change. If a rule conflicts with existing code, fix the existing code.
@@ -7,7 +7,7 @@
 
 ## Project Overview
 
-**GenieX-UI** is a Tauri 2 desktop app: Rust backend (`src-tauri/`) + React 19
+**LocalGenie** is a Tauri 2 desktop app: Rust backend (`src-tauri/`) + React 19
 frontend (`src/`). SQLite persistence via sea-orm, Zustand state management,
 Fluent UI v9 component library, Vite build tooling, Biome linter/formatter.
 

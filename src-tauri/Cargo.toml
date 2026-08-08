@@ -1,12 +1,12 @@
 [package]
-name = "geniex-ui"
+name = "LocalGenie"
 version = "0.1.0"
 description = "A Tauri 2 app for Qualcomm GenieX"
 authors = ["you"]
 edition = "2021"
 
 [lib]
-name = "geniex_ui_lib"
+name = "local_genie_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]

@@ -1,4 +1,4 @@
-# Known Issues — GenieX-UI
+# Known Issues — LocalGenie
 
 ## Fluent UI Toast Not Showing (2026-07-30)
 
