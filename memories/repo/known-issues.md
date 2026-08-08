@@ -1,25 +1,31 @@
-# Known Issues â€” LocalGenie
+# Known Issues — LocalGenie
 
-## Fluent UI Toast Not Showing (2026-07-30)
+## Active
 
-- `useToastController("app-toaster")` + `<Toast><ToastTitle>` JSX pattern used in `AppSettings.tsx` and `ModelSettings.tsx`
+### Fluent UI Toast Not Showing (2026-07-30)
+- `dispatchToast()` API is correct (NOT the `toast()` helper which doesn't exist in v9.62.0)
 - `<Toaster toasterId="app-toaster" />` rendered at app root in `App.tsx`
-- `.fui-Toaster { z-index: 100000 !important }` added to `App.css` â€” still no toast
-- The `toast()` helper from `@fluentui/react-components` does NOT exist in v9.62.0
-- `@fluentui/react-toast` also doesn't export `toast()` in this version
-- Correct API: `dispatchToast(<Toast><ToastTitle>...</ToastTitle></Toast>, { intent: "success" })`
-- Root cause of non-display is still unresolved â€” possibly Drawer overlay or Toaster portal context issue
+- `.fui-Toaster { z-index: 100000 !important }` in `App.css` — still no toast
+- Root cause unresolved — likely Drawer overlay or Toaster portal context issue
 
-## Session Persistence Bug (FIXED 2026-07-30)
+### Model Loading Broken
+- Warmup request (`POST /v1/chat/completions` with `max_tokens:1`) sent correctly but GenieX server never responds
+- NPU loading takes minutes; server blocks all HTTP during load
+- Timeout increased to 600s but model still never loads
+- Blocks entire core workflow (load ? chat)
 
-- `saveSession` used `INSERT OR REPLACE` which in SQLite = `DELETE + INSERT`
-- `messages` table has `FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE`
-- Every `saveSession` call was cascading and wiping all messages for that session
-- Fix: changed to `INSERT ... ON CONFLICT(id) DO UPDATE SET ...` which upserts without triggering CASCADE
-- Same fix applied to `saveMessage` for consistency
+### No Model Unload Without Killing Server
+- No per-model unload endpoint in GenieX CLI
+- Only way to free model memory is to kill the `geniex serve` process
 
-## Settings Drawer File Overwrite
+## Resolved
 
-- PowerShell `Set-Content` with here-string (`@'...'@`) was needed to overwrite `SettingsDrawer.tsx`
-- `replace_string_in_file` tool failed repeatedly due to whitespace/CRLF mismatches in the 341-line file
-- `create_file` tool refuses to overwrite existing files
+### Session Persistence Bug (FIXED 2026-07-30)
+- `saveSession` used `INSERT OR REPLACE` which cascaded and wiped all messages
+- Fix: changed to `INSERT ... ON CONFLICT(id) DO UPDATE SET ...` (upsert without CASCADE trigger)
+
+## Notes
+
+### Brand Rename (2026-08-08)
+- Renamed from "GenieX-UI" to "LocalGenie" across codebase and GitHub repo
+- GenieX CLI references (`geniex` binary, `geniex.ts` service, `geniex.db`, `com.geniex.ui`) preserved

@@ -242,4 +242,19 @@ LocalGenie/
 
 ---
 
-*Last updated: 2026-07-30 (session 2 — settings refactor)*
+---
+
+## Repo Memory Files
+
+These files in `memories/repo/` provide concise, up-to-date context for AI assistants working on this codebase:
+
+| File | Contents |
+|---|---|
+| [`project-overview.md`](../../memories/repo/project-overview.md) | Stack summary, folder layout, key conventions, DB layer overview |
+| [`db-architecture.md`](../../memories/repo/db-architecture.md) | Database schema, entities, migrations, key ORM patterns |
+| [`known-issues.md`](../../memories/repo/known-issues.md) | Active bugs, resolved issues, and project notes |
+| [`code-quality.md`](../../memories/repo/code-quality.md) | Completed code-quality work, DX improvements, remaining items |
+
+---
+
+*Last updated: 2026-08-08 (brand rename to LocalGenie)*
