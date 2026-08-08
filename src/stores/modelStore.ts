@@ -39,27 +39,26 @@ export const useModelStore = create<ModelState>((set) => ({
   activeModelId: null,
 
   setModels: (models) => set({ models }),
-  setServerStatus: (status) => set((state) => {
-    // Auto-sync activeModelId when server status changes
-    const firstModel = status.models.length > 0 ? status.models[0] : null;
-    const activeModelId = firstModel
-      ? (state.activeModelId && status.models.includes(state.activeModelId)
-          ? state.activeModelId  // keep current if still loaded
-          : firstModel)          // otherwise fall back to first loaded
-      : null;                     // nothing loaded → clear
-    return { serverStatus: status, activeModelId };
-  }),
-  setServerPort: (port) => set((state) => ({
-    serverPort: port,
-    serverStatus: { ...state.serverStatus, port },
-  })),
+  setServerStatus: (status) =>
+    set((state) => {
+      // Auto-sync activeModelId when server status changes
+      const firstModel = status.models.length > 0 ? status.models[0] : null;
+      const activeModelId = firstModel
+        ? state.activeModelId && status.models.includes(state.activeModelId)
+          ? state.activeModelId // keep current if still loaded
+          : firstModel // otherwise fall back to first loaded
+        : null; // nothing loaded → clear
+      return { serverStatus: status, activeModelId };
+    }),
+  setServerPort: (port) =>
+    set((state) => ({
+      serverPort: port,
+      serverStatus: { ...state.serverStatus, port },
+    })),
   setActiveModel: (modelId) => set({ activeModelId: modelId }),
   addDownload: (progress) =>
     set((state) => ({
-      downloads: [
-        ...state.downloads.filter((d) => d.model !== progress.model),
-        progress,
-      ],
+      downloads: [...state.downloads.filter((d) => d.model !== progress.model), progress],
     })),
   removeDownload: (model) =>
     set((state) => ({

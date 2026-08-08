@@ -1,7 +1,4 @@
-import {
-  type Theme,
-  createDarkTheme,
-} from "@fluentui/react-components";
+import { type Theme, createDarkTheme } from "@fluentui/react-components";
 
 const brandVariants = {
   10: "#1a1a3e",
@@ -70,21 +67,4 @@ export const genieXTheme: Theme = {
   shadow4: "0 2px 4px rgba(0, 0, 0, 0.4)",
   shadow8: "0 4px 8px rgba(0, 0, 0, 0.5)",
   shadow16: "0 8px 16px rgba(0, 0, 0, 0.5)",
-};
-
-/**
- * CSS custom properties for additional styling not covered by Fluent tokens.
- */
-export const customThemeVars = {
-  sidebarBg: "#12122A",
-  sidebarBorder: "#2A2A4A",
-  chatBg: "#1A1A2E",
-  inputBg: "#242444",
-  inputBorder: "#3A3A5C",
-  userBubbleBg: "#3A3A6E",
-  assistantBubbleBg: "#1E1E3A",
-  accentPurple: "#6C63FF",
-  accentBlue: "#4A90D9",
-  scrollbarTrack: "#1A1A2E",
-  scrollbarThumb: "#3A3A5C",
 };

@@ -75,7 +75,7 @@ pub async fn load_model(
     model: String,
     base_url: Option<String>,
 ) -> Result<super::server::ServerStatus, String> {
-    let resolved_base = base_url.unwrap_or_else(|| "http://127.0.0.1:18181".into());
+    let resolved_base = base_url.unwrap_or_else(|| super::constants::DEFAULT_BASE_URL.into());
     let clean_model = strip_precision(&model);
 
     eprintln!("[load] loading model '{}' (stripped: '{}')", model, clean_model);
@@ -85,7 +85,7 @@ pub async fn load_model(
         .rsplit(':')
         .next()
         .and_then(|s| s.parse::<u16>().ok())
-        .unwrap_or(18181);
+        .unwrap_or(super::constants::DEFAULT_PORT);
 
     let url = format!("{}/v1/chat/completions", resolved_base);
     let body = serde_json::json!({
@@ -171,7 +171,7 @@ pub async fn chat_completion(
     model: Option<String>,
     base_url: Option<String>,
 ) -> Result<(), String> {
-    let resolved_base = base_url.unwrap_or_else(|| "http://127.0.0.1:18181".into());
+    let resolved_base = base_url.unwrap_or_else(|| super::constants::DEFAULT_BASE_URL.into());
     let url = format!("{}/v1/chat/completions", resolved_base);
 
     eprintln!(

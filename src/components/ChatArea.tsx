@@ -1,7 +1,6 @@
-import React, { useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { useChatStore } from "../stores/chatStore";
 import MessageBubble from "./MessageBubble";
-import { Spinner } from "@fluentui/react-components";
 
 export default function ChatArea() {
   const activeSessionId = useChatStore((s) => s.activeSessionId);
@@ -43,7 +42,7 @@ export default function ChatArea() {
           <span className="model-delimiter-line" />
           <span className="model-delimiter-label">{shortName}</span>
           <span className="model-delimiter-line" />
-        </div>
+        </div>,
       );
     }
     if (msg.modelId) prevModelId = msg.modelId;
@@ -54,7 +53,7 @@ export default function ChatArea() {
         message={msg}
         isLastUserMessage={msg.role === "user" && msg.id === lastUserMsgId}
         isStreaming={isStreaming}
-      />
+      />,
     );
   }
 

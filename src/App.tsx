@@ -40,15 +40,12 @@ export default function App() {
   const sessions = useChatStore((s) => s.sessions);
   const activeSessionId = useChatStore((s) => s.activeSessionId);
   const loadSessions = useChatStore((s) => s.loadSessions);
-  const updateLastAssistantMessage = useChatStore(
-    (s) => s.updateLastAssistantMessage
-  );
+  const updateLastAssistantMessage = useChatStore((s) => s.updateLastAssistantMessage);
   const setStreaming = useChatStore((s) => s.setStreaming);
   const lastSendTime = useChatStore((s) => s.lastSendTime);
 
   const setModels = useModelStore((s) => s.setModels);
   const setServerStatus = useModelStore((s) => s.setServerStatus);
-  const serverPort = useModelStore((s) => s.serverPort);
   const setServerPort = useModelStore((s) => s.setServerPort);
 
   const [showModelBrowser, setShowModelBrowser] = React.useState(false);
@@ -97,7 +94,9 @@ export default function App() {
       console.warn("[app] Server process exited unexpectedly");
       setServerStatus({ running: false, port: useModelStore.getState().serverPort, models: [] });
     });
-    return () => { unlisten.then((fn) => fn()); };
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   }, []);
 
   // ── Persist active session to DB (debounced) ──────────────────
@@ -127,10 +126,7 @@ export default function App() {
       const lastMsg = session.messages[session.messages.length - 1];
       if (lastMsg && lastMsg.role === "assistant") {
         // Append to existing assistant message
-        updateLastAssistantMessage(
-          activeSessionId,
-          lastMsg.content + event.payload.content
-        );
+        updateLastAssistantMessage(activeSessionId, lastMsg.content + event.payload.content);
       } else {
         // First chunk of a new response — reset per-response counters
         tokenCountRef.current = 1;
@@ -201,31 +197,25 @@ export default function App() {
 
   // ── Listen for pull progress ──────────────────────────────────
   useEffect(() => {
-    const unlisten = listen<{ model: string; message: string }>(
-      "model-pull-progress",
-      (event) => {
-        const { model, message } = event.payload;
-        useModelStore.getState().addDownload({
-          model,
-          message,
-          status: "downloading",
-        });
+    const unlisten = listen<{ model: string; message: string }>("model-pull-progress", (event) => {
+      const { model, message } = event.payload;
+      useModelStore.getState().addDownload({
+        model,
+        message,
+        status: "downloading",
+      });
+    });
+    const unlistenComplete = listen<{ model: string }>("model-pull-complete", async (event) => {
+      const { model } = event.payload;
+      useModelStore.getState().removeDownload(model);
+      // Refresh model list
+      try {
+        const models = await geniex.listModels();
+        useModelStore.getState().setModels(models);
+      } catch {
+        // ignore
       }
-    );
-    const unlistenComplete = listen<{ model: string }>(
-      "model-pull-complete",
-      async (event) => {
-        const { model } = event.payload;
-        useModelStore.getState().removeDownload(model);
-        // Refresh model list
-        try {
-          const models = await geniex.listModels();
-          useModelStore.getState().setModels(models);
-        } catch {
-          // ignore
-        }
-      }
-    );
+    });
     return () => {
       unlisten.then((fn) => fn());
       unlistenComplete.then((fn) => fn());
@@ -246,9 +236,7 @@ export default function App() {
         {activeSession && <ChatInput />}
       </div>
 
-      {showModelBrowser && (
-        <ModelBrowser onClose={() => setShowModelBrowser(false)} />
-      )}
+      {showModelBrowser && <ModelBrowser onClose={() => setShowModelBrowser(false)} />}
       {settingsTab && (
         <SettingsDrawer defaultTab={settingsTab} onClose={() => setSettingsTab(null)} />
       )}

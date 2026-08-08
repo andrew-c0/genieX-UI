@@ -1,9 +1,4 @@
-import React from "react";
-import {
-  Badge,
-  Button,
-  Tooltip,
-} from "@fluentui/react-components";
+import { Badge, Button, Tooltip } from "@fluentui/react-components";
 import { ArrowLeftRegular } from "@fluentui/react-icons";
 import { useModelStore } from "../stores/modelStore";
 
@@ -19,11 +14,7 @@ export default function Header({ onOpenModelSettings }: HeaderProps) {
     <div className="main-header">
       <div className="main-header-left">
         <div className="server-status">
-          <span
-            className={`server-status-dot ${
-              serverStatus.running ? "running" : "stopped"
-            }`}
-          />
+          <span className={`server-status-dot ${serverStatus.running ? "running" : "stopped"}`} />
           {serverStatus.running ? "Connected" : "Disconnected"}
         </div>
 
@@ -44,11 +35,7 @@ export default function Header({ onOpenModelSettings }: HeaderProps) {
 
       <div className="main-header-right">
         <Tooltip content="Model settings" relationship="label">
-          <Button
-            appearance="subtle"
-            icon={<ArrowLeftRegular />}
-            onClick={onOpenModelSettings}
-          />
+          <Button appearance="subtle" icon={<ArrowLeftRegular />} onClick={onOpenModelSettings} />
         </Tooltip>
       </div>
     </div>

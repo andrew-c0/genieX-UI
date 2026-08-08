@@ -1,10 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type {
-  GenerationSettings,
-  ModelInfo,
-  SearchModel,
-  ServerStatus,
-} from "../types";
+import type { GenerationSettings, ModelInfo, SearchModel, ServerStatus } from "../types";
 
 /** Shape sent to the OpenAI-compatible chat completions endpoint. */
 interface ChatMessage {
@@ -21,7 +16,7 @@ export async function listModels(): Promise<ModelInfo[]> {
 export async function pullModel(
   model: string,
   precision?: string,
-  modelHub?: string
+  modelHub?: string,
 ): Promise<void> {
   return invoke("pull_model", { model, precision, modelHub });
 }
@@ -36,30 +31,21 @@ export async function searchModels(query: string): Promise<SearchModel[]> {
 
 // ─── Server Management ───────────────────────────────────────────
 
-export async function startServer(
-  port?: number
-): Promise<ServerStatus> {
+export async function startServer(port?: number): Promise<ServerStatus> {
   return invoke("start_server", { port });
 }
 
-export async function stopServer(
-  port?: number
-): Promise<ServerStatus> {
+export async function stopServer(port?: number): Promise<ServerStatus> {
   return invoke("stop_server", { port });
 }
 
-export async function getServerStatus(
-  port?: number
-): Promise<ServerStatus> {
+export async function getServerStatus(port?: number): Promise<ServerStatus> {
   return invoke("get_server_status", { port });
 }
 
 // ─── Model Loading ──────────────────────────────────────────────
 
-export async function loadModel(
-  model: string,
-  baseUrl?: string
-): Promise<ServerStatus> {
+export async function loadModel(model: string, baseUrl?: string): Promise<ServerStatus> {
   return invoke("load_model", { model, baseUrl });
 }
 
@@ -73,7 +59,7 @@ export async function chatCompletion(
   messages: ChatMessage[],
   settings: GenerationSettings,
   model?: string,
-  baseUrl?: string
+  baseUrl?: string,
 ): Promise<void> {
   return invoke("chat_completion", { messages, settings, model, baseUrl });
 }

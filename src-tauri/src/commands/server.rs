@@ -28,7 +28,7 @@ pub async fn start_server(
     state: State<'_, AppState>,
     port: Option<u16>,
 ) -> Result<ServerStatus, String> {
-    let serve_port = port.unwrap_or(18181);
+    let serve_port = port.unwrap_or(super::constants::DEFAULT_PORT);
 
     // First, check if a server is already running on the port (externally or by us)
     if probe_server(&state.http_client, serve_port).await {
@@ -106,8 +106,8 @@ pub async fn start_server(
 
     // Poll for readiness instead of a fixed sleep.
     // The server may take varying amounts of time to bind the port.
-    for _ in 0..15 {
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    for _ in 0..super::constants::SERVER_STARTUP_PROBES {
+        tokio::time::sleep(std::time::Duration::from_millis(super::constants::SERVER_STARTUP_PROBE_DELAY_MS)).await;
         if probe_server(&state.http_client, serve_port).await {
             return get_server_status(state, port).await;
         }
@@ -120,7 +120,7 @@ pub async fn start_server(
 /// Stop the running `geniex serve` process.
 #[tauri::command]
 pub async fn stop_server(state: State<'_, AppState>, port: Option<u16>) -> Result<ServerStatus, String> {
-    let serve_port = port.unwrap_or(18181);
+    let serve_port = port.unwrap_or(super::constants::DEFAULT_PORT);
     let pid = {
         let mut proc = state.server_process.lock().unwrap();
         proc.take()
@@ -155,7 +155,7 @@ pub async fn stop_server(state: State<'_, AppState>, port: Option<u16>) -> Resul
 /// Works regardless of whether we spawned the server or it's running externally.
 #[tauri::command]
 pub async fn get_server_status(state: State<'_, AppState>, port: Option<u16>) -> Result<ServerStatus, String> {
-    let serve_port = port.unwrap_or(18181);
+    let serve_port = port.unwrap_or(super::constants::DEFAULT_PORT);
 
     match state
         .http_client

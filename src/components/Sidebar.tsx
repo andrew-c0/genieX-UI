@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Button,
   Tooltip,
@@ -7,10 +7,6 @@ import {
   DialogBody,
   DialogTitle,
   DialogContent,
-  Popover,
-  PopoverTrigger,
-  PopoverSurface,
-  Spinner,
 } from "@fluentui/react-components";
 import {
   AddRegular,
@@ -20,8 +16,6 @@ import {
   ArrowDownloadRegular,
 } from "@fluentui/react-icons";
 import { useChatStore } from "../stores/chatStore";
-import { useModelStore } from "../stores/modelStore";
-import * as geniex from "../services/geniex";
 import * as db from "../services/database";
 import ModelSelector from "./ModelSelector";
 
@@ -66,13 +60,13 @@ export default function Sidebar({ onOpenModelBrowser, onOpenAppSettings }: Sideb
           <ModelSelector />
         </div>
 
-        <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+        <div className="sidebar-button-row">
           <Button
             appearance="subtle"
             size="small"
             icon={<ArrowDownloadRegular />}
             onClick={onOpenModelBrowser}
-            style={{ flex: 1 }}
+            className="sidebar-btn-full"
           >
             Models
           </Button>
@@ -80,12 +74,12 @@ export default function Sidebar({ onOpenModelBrowser, onOpenAppSettings }: Sideb
       </div>
 
       {/* ── New Chat Button ───────────────────────── */}
-      <div style={{ padding: "8px 8px 0" }}>
+      <div className="sidebar-new-chat-wrap">
         <Button
           appearance="primary"
           icon={<AddRegular />}
           onClick={handleNewChat}
-          style={{ width: "100%" }}
+          className="sidebar-btn-100"
         >
           New Chat
         </Button>
@@ -97,10 +91,13 @@ export default function Sidebar({ onOpenModelBrowser, onOpenAppSettings }: Sideb
         {sessions.map((session) => (
           <div
             key={session.id}
-            className={`chat-history-item ${
-              session.id === activeSessionId ? "active" : ""
-            }`}
+            className={`chat-history-item ${session.id === activeSessionId ? "active" : ""}`}
             onClick={() => setActiveSession(session.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") setActiveSession(session.id);
+            }}
+            role="button"
+            tabIndex={0}
           >
             <ChatRegular className="chat-history-item-icon" />
             <span className="chat-history-item-text">{session.title}</span>
@@ -120,18 +117,7 @@ export default function Sidebar({ onOpenModelBrowser, onOpenAppSettings }: Sideb
           </div>
         ))}
 
-        {sessions.length === 0 && (
-          <div
-            style={{
-              padding: "16px 8px",
-              textAlign: "center",
-              color: "#6868a0",
-              fontSize: 13,
-            }}
-          >
-            No conversations yet.
-          </div>
-        )}
+        {sessions.length === 0 && <div className="sidebar-empty">No conversations yet.</div>}
       </div>
 
       {/* ── Footer ─────────────────────────────────── */}
@@ -141,7 +127,7 @@ export default function Sidebar({ onOpenModelBrowser, onOpenAppSettings }: Sideb
           size="small"
           icon={<SettingsRegular />}
           onClick={onOpenAppSettings}
-          style={{ flex: 1 }}
+          className="sidebar-btn-full"
         >
           Settings
         </Button>
@@ -158,9 +144,8 @@ export default function Sidebar({ onOpenModelBrowser, onOpenAppSettings }: Sideb
           <DialogBody>
             <DialogTitle>Delete Chat</DialogTitle>
             <DialogContent>
-              Are you sure you want to delete this conversation? This cannot be
-              undone.
-              <div style={{ marginTop: 16, display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              Are you sure you want to delete this conversation? This cannot be undone.
+              <div className="dialog-footer">
                 <Button appearance="secondary" onClick={() => setDeleteTarget(null)}>
                   Cancel
                 </Button>

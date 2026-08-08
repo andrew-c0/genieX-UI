@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { SendRegular } from "@fluentui/react-icons";
 import { useChatStore } from "../stores/chatStore";
 import { useModelStore, defaultSettings } from "../stores/modelStore";
@@ -18,12 +18,11 @@ export default function ChatInput() {
   const setLastSendTime = useChatStore((s) => s.setLastSendTime);
   const serverStatus = useModelStore((s) => s.serverStatus);
   const serverPort = useModelStore((s) => s.serverPort);
-  const activeModelId = useModelStore((s) => s.activeModelId);
   const retryFromMessageId = useChatStore((s) => s.retryFromMessageId);
   const setRetryFromMessageId = useChatStore((s) => s.setRetryFromMessageId);
 
   const activeSession = useChatStore((s) =>
-    s.sessions.find((sess) => sess.id === s.activeSessionId)
+    s.sessions.find((sess) => sess.id === s.activeSessionId),
   );
   const contextChars = activeSession?.contextChars ?? 0;
 
@@ -41,9 +40,7 @@ export default function ChatInput() {
       try {
         let settings = { ...defaultSettings };
         if (rawModelId) {
-          const baseName = rawModelId.includes(":")
-            ? rawModelId.split(":")[0]
-            : rawModelId;
+          const baseName = rawModelId.includes(":") ? rawModelId.split(":")[0] : rawModelId;
           try {
             const saved = await db.loadModelSettings(baseName);
             if (saved) settings = { ...settings, ...JSON.parse(saved) };
@@ -87,9 +84,7 @@ export default function ChatInput() {
     addMessage(activeSessionId, userMsg);
     await db.saveMessage(activeSessionId, userMsg).catch(() => {});
 
-    const session = useChatStore
-      .getState()
-      .sessions.find((s) => s.id === activeSessionId);
+    const session = useChatStore.getState().sessions.find((s) => s.id === activeSessionId);
     if (!session) return;
 
     const apiMessages = session.messages.map((m) => ({
@@ -106,10 +101,16 @@ export default function ChatInput() {
 
     const store = useChatStore.getState();
     const session = store.sessions.find((s) => s.id === activeSessionId);
-    if (!session) { setRetryFromMessageId(null); return; }
+    if (!session) {
+      setRetryFromMessageId(null);
+      return;
+    }
 
     const idx = session.messages.findIndex((m) => m.id === retryFromMessageId);
-    if (idx < 0) { setRetryFromMessageId(null); return; }
+    if (idx < 0) {
+      setRetryFromMessageId(null);
+      return;
+    }
 
     // Collect all messages after the retry point for DB cleanup
     const messagesToRemove = session.messages.slice(idx + 1);
@@ -121,7 +122,10 @@ export default function ChatInput() {
     }
 
     const updated = useChatStore.getState().sessions.find((s) => s.id === activeSessionId);
-    if (!updated) { setRetryFromMessageId(null); return; }
+    if (!updated) {
+      setRetryFromMessageId(null);
+      return;
+    }
 
     const apiMessages = updated.messages
       .slice(0, idx + 1)
@@ -142,15 +146,14 @@ export default function ChatInput() {
     const el = textareaRef.current;
     if (el) {
       el.style.height = "auto";
-      el.style.height = Math.min(el.scrollHeight, 200) + "px";
+      el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
     }
   };
 
   const isDisabled = !text.trim() || isStreaming || !serverStatus.running;
 
   const contextPct = Math.min(100, Math.round((contextChars / MAX_CONTEXT_CHARS) * 100));
-  const contextColor =
-    contextPct > 90 ? "#e74c3c" : contextPct > 70 ? "#f39c12" : "#2ecc71";
+  const contextColor = contextPct > 90 ? "#e74c3c" : contextPct > 70 ? "#f39c12" : "#2ecc71";
 
   return (
     <div className="chat-input-area">
@@ -159,10 +162,18 @@ export default function ChatInput() {
           <div className="context-bar-track">
             <div
               className="context-bar-fill"
-              style={{ width: `${contextPct}%`, background: contextColor }}
+              style={
+                {
+                  "--ctx-pct": `${contextPct}%`,
+                  "--ctx-color": contextColor,
+                } as React.CSSProperties
+              }
             />
           </div>
-          <span className="context-bar-label" style={{ color: contextColor }}>
+          <span
+            className="context-bar-label"
+            style={{ "--ctx-color": contextColor } as React.CSSProperties}
+          >
             {contextChars.toLocaleString()} / {MAX_CONTEXT_CHARS.toLocaleString()} chars
           </span>
         </div>
@@ -187,10 +198,10 @@ export default function ChatInput() {
           disabled={isStreaming}
         />
         <button
-          className="send-button"
+          type="button"
+          className={`send-button${isDisabled ? " send-button-disabled" : ""}`}
           onClick={handleSend}
           disabled={isDisabled}
-          style={{ opacity: isDisabled ? 0.4 : 1 }}
         >
           <SendRegular />
         </button>

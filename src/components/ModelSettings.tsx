@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Button,
   Slider,
@@ -67,15 +67,12 @@ export default function ModelSettings() {
         <Toast>
           <ToastTitle>Model settings saved</ToastTitle>
         </Toast>,
-        { intent: "success" }
+        { intent: "success" },
       );
     }
   }, [displayModel, settings, dispatchToast]);
 
-  const update = <K extends keyof GenerationSettings>(
-    key: K,
-    value: GenerationSettings[K]
-  ) => {
+  const update = <K extends keyof GenerationSettings>(key: K, value: GenerationSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -85,15 +82,15 @@ export default function ModelSettings() {
     <>
       {/* ── Model Picker ────────────────────────── */}
       {downloadedModels.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: "#8888a8", marginBottom: 4 }}>Model</div>
+        <div className="ms-model-picker-group">
+          <div className="ms-model-label">Model</div>
           <Dropdown
             value={displayModel ?? "Select a model…"}
             selectedOptions={displayModel ? [displayModel] : []}
             onOptionSelect={(_, data) => {
               if (data.optionValue) setSelectedModel(data.optionValue);
             }}
-            style={{ width: "100%" }}
+            className="ms-full-width"
           >
             {downloadedModels.map((m) => (
               <Option key={m.name} value={m.name}>
@@ -105,7 +102,7 @@ export default function ModelSettings() {
       )}
 
       {displayModel && activeModelId && displayModel !== activeModelId && (
-        <div style={{ marginBottom: 12, fontSize: 12, color: "#f39c12" }}>
+        <div className="ms-warn-banner">
           ⚠ Editing settings for a model not currently loaded on the server.
         </div>
       )}
@@ -116,35 +113,31 @@ export default function ModelSettings() {
 
         <div className="settings-row">
           <span className="settings-label">Temperature</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="ms-slider-row">
             <Slider
               min={0}
               max={2}
               step={0.1}
               value={settings.temperature ?? 0.7}
               onChange={(_, data) => update("temperature", data.value)}
-              style={{ width: 120 }}
+              className="ms-slider"
             />
-            <span style={{ fontSize: 12, color: "#b0b0c8", minWidth: 30, textAlign: "right" }}>
-              {(settings.temperature ?? 0.7).toFixed(1)}
-            </span>
+            <span className="ms-slider-value">{(settings.temperature ?? 0.7).toFixed(1)}</span>
           </div>
         </div>
 
         <div className="settings-row">
           <span className="settings-label">Top P</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="ms-slider-row">
             <Slider
               min={0}
               max={1}
               step={0.05}
               value={settings.topP ?? 0.9}
               onChange={(_, data) => update("topP", data.value)}
-              style={{ width: 120 }}
+              className="ms-slider"
             />
-            <span style={{ fontSize: 12, color: "#b0b0c8", minWidth: 30, textAlign: "right" }}>
-              {(settings.topP ?? 0.9).toFixed(2)}
-            </span>
+            <span className="ms-slider-value">{(settings.topP ?? 0.9).toFixed(2)}</span>
           </div>
         </div>
 
@@ -162,18 +155,16 @@ export default function ModelSettings() {
 
         <div className="settings-row">
           <span className="settings-label">Min P</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="ms-slider-row">
             <Slider
               min={0}
               max={1}
               step={0.01}
               value={settings.minP ?? 0.05}
               onChange={(_, data) => update("minP", data.value)}
-              style={{ width: 120 }}
+              className="ms-slider"
             />
-            <span style={{ fontSize: 12, color: "#b0b0c8", minWidth: 30, textAlign: "right" }}>
-              {(settings.minP ?? 0.05).toFixed(2)}
-            </span>
+            <span className="ms-slider-value">{(settings.minP ?? 0.05).toFixed(2)}</span>
           </div>
         </div>
 
@@ -191,7 +182,7 @@ export default function ModelSettings() {
         </div>
       </div>
 
-      <Divider style={{ margin: "16px 0" }} />
+      <Divider className="divider-vertical" />
 
       {/* ── Generation Settings ─────────────────── */}
       <div className="settings-section">
@@ -232,25 +223,13 @@ export default function ModelSettings() {
         </div>
       </div>
 
-      <Divider style={{ margin: "16px 0" }} />
+      <Divider className="divider-vertical" />
 
       {/* ── System Prompt ───────────────────────── */}
       <div className="settings-section">
         <div className="settings-section-title">System Prompt</div>
         <textarea
-          style={{
-            width: "100%",
-            minHeight: 100,
-            background: "#242444",
-            border: "1px solid #3a3a5c",
-            borderRadius: 8,
-            padding: 10,
-            color: "#e8e8f0",
-            fontSize: 13,
-            fontFamily: "inherit",
-            resize: "vertical",
-            outline: "none",
-          }}
+          className="ms-sys-prompt"
           value={settings.systemPrompt ?? ""}
           onChange={(e) => update("systemPrompt", e.target.value)}
           placeholder="Optional system prompt…"
@@ -262,7 +241,7 @@ export default function ModelSettings() {
         icon={saving ? <Spinner size="tiny" /> : <SaveRegular />}
         onClick={handleSave}
         disabled={saving}
-        style={{ width: "100%", marginTop: 12 }}
+        className="ms-save-btn"
       >
         {saving ? "Saving…" : "Save"}
       </Button>

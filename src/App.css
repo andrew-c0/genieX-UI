@@ -15,11 +15,7 @@ body,
   overflow: hidden;
   background: #1a1a2e;
   color: #e8e8f0;
-  font-family:
-    "Segoe UI",
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* ─── Scrollbar Styling ────────────────────────────────────────── */
@@ -416,6 +412,10 @@ body,
   cursor: not-allowed;
 }
 
+.send-button-disabled {
+  opacity: 0.4;
+}
+
 /* ─── Context Bar ────────────────────────────────────────────── */
 
 .context-bar {
@@ -432,19 +432,6 @@ body,
   background: #2a2a4a;
   border-radius: 2px;
   overflow: hidden;
-}
-
-.context-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s, background 0.3s;
-}
-
-.context-bar-label {
-  font-size: 11px;
-  font-family: "Cascadia Code", "Fira Code", monospace;
-  white-space: nowrap;
-  opacity: 0.8;
 }
 
 /* ─── Welcome Screen ───────────────────────────────────────────── */
@@ -718,26 +705,6 @@ body,
   color: #b0b0c8;
 }
 
-/* ─── Utility ──────────────────────────────────────────────────── */
-
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.gap-8 {
-  gap: 8px;
-}
-
-.text-muted {
-  color: #8888a8;
-}
-
-.text-sm {
-  font-size: 12px;
-}
-
 /* ─── Model Delimiter ──────────────────────────────────────────── */
 
 .model-delimiter {
@@ -764,4 +731,432 @@ body,
   border: 1px solid #3a3a5c;
   white-space: nowrap;
   letter-spacing: 0.03em;
+}
+
+/* ─── Error Boundary ───────────────────────────────────────────── */
+
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: #1a1a2e;
+  color: #e8e8f0;
+  font-family: "Segoe UI", sans-serif;
+  padding: 40px;
+  text-align: center;
+}
+
+.error-boundary-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: white;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.error-boundary-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.error-boundary-message {
+  font-size: 14px;
+  color: #8888a8;
+  max-width: 400px;
+  margin-bottom: 24px;
+}
+
+.error-boundary-retry {
+  padding: 10px 24px;
+  background: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.error-boundary-retry:hover {
+  background: #7b73ff;
+}
+
+/* ─── Shared: Dialog / Drawer ─────────────────────────────────── */
+
+.dialog-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.drawer-width {
+  width: 380px;
+}
+
+.drawer-content-wrap {
+  padding: 16px;
+}
+
+.drawer-body-no-padding {
+  padding: 0;
+}
+
+.divider-vertical {
+  margin: 16px 0;
+}
+
+/* ─── Model Settings ───────────────────────────────────────────── */
+
+.ms-model-picker-group {
+  margin-bottom: 16px;
+}
+
+.ms-model-label {
+  font-size: 12px;
+  color: #8888a8;
+  margin-bottom: 4px;
+}
+
+.ms-full-width {
+  width: 100%;
+}
+
+.ms-warn-banner {
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #f39c12;
+}
+
+.ms-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ms-slider {
+  width: 120px;
+}
+
+.ms-slider-value {
+  font-size: 12px;
+  color: #b0b0c8;
+  min-width: 30px;
+  text-align: right;
+}
+
+.ms-sys-prompt {
+  width: 100%;
+  min-height: 100px;
+  background: #242444;
+  border: 1px solid #3a3a5c;
+  border-radius: 8px;
+  padding: 10px;
+  color: #e8e8f0;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.ms-sys-prompt:focus {
+  border-color: #6c63ff;
+}
+
+.ms-save-btn {
+  width: 100%;
+  margin-top: 12px;
+}
+
+/* ─── Model Selector ───────────────────────────────────────────── */
+
+.ms-model-list-root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ms-server-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.ms-server-status-icon {
+  font-size: 14px;
+}
+
+.ms-server-icon-on {
+  color: #4caf50;
+}
+
+.ms-server-icon-off {
+  color: #f44336;
+}
+
+.ms-server-status-text {
+  font-size: 12px;
+  color: #b0b0c8;
+  flex: 1;
+}
+
+.ms-empty-state {
+  font-size: 12px;
+  color: #8888a8;
+  text-align: center;
+  padding: 8px;
+}
+
+.ms-model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ms-model-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.ms-model-item.loaded {
+  background: #1a2a1a;
+}
+
+.ms-model-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ms-model-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #e8e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-model-meta {
+  font-size: 10px;
+  color: #6a6a8a;
+}
+
+.ms-model-loaded-dot {
+  color: #4caf50;
+  margin-left: 4px;
+}
+
+.ms-model-busy {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #2196f3;
+}
+
+.ms-model-active {
+  font-size: 11px;
+  color: #4caf50;
+  padding: 2px 8px;
+}
+
+.ms-load-btn {
+  min-width: 0;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+/* ─── Model Browser ────────────────────────────────────────────── */
+
+.mb-dialog-surface {
+  max-width: 700px;
+  min-height: 500px;
+}
+
+.mb-dialog-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mb-tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.mb-error {
+  margin-bottom: 12px;
+}
+
+.mb-downloads-section {
+  margin-bottom: 16px;
+}
+
+.mb-download-msg {
+  font-size: 12px;
+  color: #8888a8;
+}
+
+.mb-empty-state {
+  padding: 32px 0;
+  text-align: center;
+  color: #8888a8;
+}
+
+.mb-empty-state.search {
+  padding: 24px 0;
+}
+
+.mb-search-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mb-search-input {
+  flex: 1;
+}
+
+/* ─── Sidebar ──────────────────────────────────────────────────── */
+
+.sidebar-button-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.sidebar-btn-full {
+  flex: 1;
+}
+
+.sidebar-new-chat-wrap {
+  padding: 8px 8px 0;
+}
+
+.sidebar-btn-100 {
+  width: 100%;
+}
+
+.sidebar-empty {
+  padding: 16px 8px;
+  text-align: center;
+  color: #6868a0;
+  font-size: 13px;
+}
+
+/* ─── App Settings ─────────────────────────────────────────────── */
+
+.port-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.port-input {
+  flex: 1;
+}
+
+.port-error {
+  font-size: 11px;
+  color: #e74c3c;
+}
+
+.port-checking {
+  font-size: 11px;
+  color: #b0b0c8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.port-in-use {
+  font-size: 11px;
+  color: #f39c12;
+}
+
+.port-endpoint {
+  font-size: 11px;
+  color: #6a6a8a;
+  margin-top: 4px;
+}
+
+.settings-save-btn {
+  width: 100%;
+  margin-top: 12px;
+}
+
+/* ─── Welcome Screen ───────────────────────────────────────────── */
+
+.welcome-tips {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+  max-width: 600px;
+}
+
+.welcome-tip {
+  flex: 1;
+  text-align: center;
+  padding: 16px;
+  background: #1e1e3a;
+  border-radius: 12px;
+  border: 1px solid #2a2a4a;
+}
+
+.welcome-tip-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.welcome-tip-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8e8f0;
+  margin-bottom: 4px;
+}
+
+.welcome-tip-desc {
+  font-size: 12px;
+  color: #8888a8;
+  line-height: 1.5;
+}
+
+/* ─── Context Bar (CSS-variable driven) ────────────────────────── */
+
+.context-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s, background 0.3s;
+  width: var(--ctx-pct, 0%);
+  background: var(--ctx-color, #2ecc71);
+}
+
+.context-bar-label {
+  font-size: 11px;
+  font-family: "Cascadia Code", "Fira Code", monospace;
+  white-space: nowrap;
+  opacity: 0.8;
+  color: var(--ctx-color, #2ecc71);
+}
+
+/* ─── Fluent Provider ──────────────────────────────────────────── */
+
+.fluent-full-height {
+  height: 100vh;
 }

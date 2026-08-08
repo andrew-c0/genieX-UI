@@ -1,4 +1,5 @@
 pub mod chat;
+pub mod constants;
 pub mod database;
 pub mod models;
 pub mod server;
@@ -20,7 +21,7 @@ impl Default for AppState {
         Self {
             server_process: Mutex::new(None),
             http_client: reqwest::Client::builder()
-                .timeout(std::time::Duration::from_secs(300))
+                .timeout(std::time::Duration::from_secs(constants::HTTP_TIMEOUT_SECS))
                 .build()
                 .expect("Failed to create HTTP client"),
         }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button, Spinner, Toast, ToastTitle, useToastController } from "@fluentui/react-components";
 import { SaveRegular } from "@fluentui/react-icons";
 import { useModelStore } from "../stores/modelStore";
@@ -93,7 +93,7 @@ export default function AppSettings() {
         <Toast>
           <ToastTitle>Server settings saved</ToastTitle>
         </Toast>,
-        { intent: "success" }
+        { intent: "success" },
       );
     }
   }, [portValue, setServerPort, setServerStatus, isPortChanged, portInUse, dispatchToast]);
@@ -104,9 +104,9 @@ export default function AppSettings() {
 
       <div className="settings-row">
         <span className="settings-label">Port</span>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+        <div className="port-field-group">
           <input
-            className="settings-input"
+            className="settings-input port-input"
             type="number"
             value={portValue}
             onChange={(e) => {
@@ -115,34 +115,29 @@ export default function AppSettings() {
             }}
             min={PORT_VALID_RANGE.min}
             max={PORT_VALID_RANGE.max}
-            style={{ flex: 1 }}
           />
-          {portError && (
-            <span style={{ fontSize: 11, color: "#e74c3c" }}>{portError}</span>
-          )}
+          {portError && <span className="port-error">{portError}</span>}
           {isPortChanged && portChecking && (
-            <span style={{ fontSize: 11, color: "#b0b0c8", display: "flex", alignItems: "center", gap: 4 }}>
+            <span className="port-checking">
               <Spinner size="tiny" /> Checking port…
             </span>
           )}
           {isPortChanged && !portChecking && portInUse && (
-            <span style={{ fontSize: 11, color: "#f39c12" }}>
+            <span className="port-in-use">
               ⚠ Port {portValue} is already in use by another process
             </span>
           )}
         </div>
       </div>
 
-      <div style={{ fontSize: 11, color: "#6a6a8a", marginTop: 4 }}>
-        GenieX server endpoint: 127.0.0.1:{portValue || "…"}
-      </div>
+      <div className="port-endpoint">GenieX server endpoint: 127.0.0.1:{portValue || "…"}</div>
 
       <Button
         appearance="primary"
         icon={saving ? <Spinner size="tiny" /> : <SaveRegular />}
         onClick={handleSave}
         disabled={saving || (isPortChanged && portInUse)}
-        style={{ width: "100%", marginTop: 12 }}
+        className="settings-save-btn"
       >
         {saving ? "Saving…" : "Save"}
       </Button>

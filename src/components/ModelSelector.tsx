@@ -1,11 +1,5 @@
-import React, { useCallback, useState } from "react";
-import {
-  Button,
-  Spinner,
-  Tooltip,
-  MessageBar,
-  MessageBarBody,
-} from "@fluentui/react-components";
+import { useCallback, useState } from "react";
+import { Button, Spinner, Tooltip, MessageBar, MessageBarBody } from "@fluentui/react-components";
 import {
   PlugConnectedRegular,
   PlugDisconnectedRegular,
@@ -33,9 +27,7 @@ export default function ModelSelector() {
   /** Check if a model is loaded (matches bare name or with precision suffix). */
   const isModelLoaded = useCallback(
     (modelName: string) =>
-      loadedModels.some(
-        (lm) => lm === modelName || lm.startsWith(modelName + ":"),
-      ),
+      loadedModels.some((lm) => lm === modelName || lm.startsWith(`${modelName}:`)),
     [loadedModels],
   );
 
@@ -69,9 +61,7 @@ export default function ModelSelector() {
         if (!(await ensureServer())) return;
 
         // Strip precision suffix — server auto-selects available quantization
-        const bareName = modelName.includes(":")
-          ? modelName.split(":")[0]
-          : modelName;
+        const bareName = modelName.includes(":") ? modelName.split(":")[0] : modelName;
 
         const refreshed = await geniex.loadModel(bareName, `http://127.0.0.1:${serverPort}`);
         setServerStatus(refreshed);
@@ -111,7 +101,9 @@ export default function ModelSelector() {
       const status = await geniex.startServer(serverPort);
       setServerStatus(status);
       if (!status.running) {
-        setError("Server did not start. Check that `geniex` is in your PATH and the port is available.");
+        setError(
+          "Server did not start. Check that `geniex` is in your PATH and the port is available.",
+        );
       }
     } catch (err) {
       setError(String(err));
@@ -121,22 +113,15 @@ export default function ModelSelector() {
   }, [setServerStatus, serverPort]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <div className="ms-model-list-root">
       {/* Server status + controls */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          marginBottom: 4,
-        }}
-      >
+      <div className="ms-server-controls">
         {serverStatus.running ? (
-          <PlugConnectedRegular style={{ color: "#4caf50", fontSize: 14 }} />
+          <PlugConnectedRegular className="ms-server-status-icon ms-server-icon-on" />
         ) : (
-          <PlugDisconnectedRegular style={{ color: "#f44336", fontSize: 14 }} />
+          <PlugDisconnectedRegular className="ms-server-status-icon ms-server-icon-off" />
         )}
-        <span style={{ fontSize: 12, color: "#b0b0c8", flex: 1 }}>
+        <span className="ms-server-status-text">
           {serverStatus.running ? "Server running" : "Server stopped"}
         </span>
         {serverLoading ? (
@@ -170,87 +155,38 @@ export default function ModelSelector() {
 
       {/* Model list */}
       {models.length === 0 ? (
-        <div
-          style={{
-            fontSize: 12,
-            color: "#8888a8",
-            textAlign: "center",
-            padding: 8,
-          }}
-        >
-          No models found. Pull a model first.
-        </div>
+        <div className="ms-empty-state">No models found. Pull a model first.</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div className="ms-model-list">
           {models.map((model) => {
             const loaded = isModelLoaded(model.name);
             const busy = loadingModel === model.name;
 
             return (
-              <div
-                key={model.name}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "6px 8px",
-                  borderRadius: 6,
-                  background: loaded ? "#1a2a1a" : "transparent",
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color: "#e8e8f0",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                    title={model.name}
-                  >
+              <div key={model.name} className={`ms-model-item${loaded ? " loaded" : ""}`}>
+                <div className="ms-model-item-info">
+                  <div className="ms-model-name" title={model.name}>
                     {model.name}
                   </div>
-                  <div style={{ fontSize: 10, color: "#6a6a8a" }}>
+                  <div className="ms-model-meta">
                     {model.size}
-                    {loaded && (
-                      <span style={{ color: "#4caf50", marginLeft: 4 }}>
-                        ● loaded
-                      </span>
-                    )}
+                    {loaded && <span className="ms-model-loaded-dot">● loaded</span>}
                   </div>
                 </div>
 
                 {busy ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                      fontSize: 11,
-                      color: "#2196f3",
-                    }}
-                  >
+                  <div className="ms-model-busy">
                     <Spinner size="tiny" />
                     <span>Loading…</span>
                   </div>
                 ) : loaded ? (
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: "#4caf50",
-                      padding: "2px 8px",
-                    }}
-                  >
-                    ✓ Active
-                  </span>
+                  <span className="ms-model-active">✓ Active</span>
                 ) : (
                   <Button
                     appearance="primary"
                     size="small"
                     onClick={() => handleLoad(model.name)}
-                    style={{ minWidth: 0, padding: "2px 8px", fontSize: 11 }}
+                    className="ms-load-btn"
                   >
                     Load
                   </Button>

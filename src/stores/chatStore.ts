@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import type { ChatSession, Message } from "../types";
 
+/** Max characters used for auto-generated session titles from the first message. */
+const AUTO_TITLE_MAX_LENGTH = 50;
+
 /** Calculate total characters across all messages in a session. */
 function calcContextChars(messages: Message[]): number {
   return messages.reduce((sum, m) => sum + m.content.length, 0);
@@ -29,7 +32,7 @@ interface ChatState {
   setSessionModel: (sessionId: string, modelId: string) => void;
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
+export const useChatStore = create<ChatState>((set) => ({
   sessions: [],
   activeSessionId: null,
   isStreaming: false,
@@ -61,9 +64,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       return {
         sessions: filtered,
         activeSessionId:
-          state.activeSessionId === id
-            ? filtered[0]?.id ?? null
-            : state.activeSessionId,
+          state.activeSessionId === id ? (filtered[0]?.id ?? null) : state.activeSessionId,
       };
     });
   },
@@ -85,8 +86,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
           // Auto-title from first user message
           title:
             s.title === "New Chat" && message.role === "user"
-              ? message.content.slice(0, 50) +
-                (message.content.length > 50 ? "..." : "")
+              ? message.content.slice(0, AUTO_TITLE_MAX_LENGTH) +
+                (message.content.length > AUTO_TITLE_MAX_LENGTH ? "..." : "")
               : s.title,
         };
       }),
@@ -102,7 +103,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (last && last.role === "assistant") {
           msgs[msgs.length - 1] = { ...last, content };
         }
-        return { ...s, messages: msgs, contextChars: calcContextChars(msgs), updatedAt: Date.now() };
+        return {
+          ...s,
+          messages: msgs,
+          contextChars: calcContextChars(msgs),
+          updatedAt: Date.now(),
+        };
       }),
     }));
   },
@@ -113,9 +119,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (s.id !== sessionId) return s;
         return {
           ...s,
-          messages: s.messages.map((m) =>
-            m.id === messageId ? { ...m, stats } : m
-          ),
+          messages: s.messages.map((m) => (m.id === messageId ? { ...m, stats } : m)),
         };
       }),
     }));
@@ -128,7 +132,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const idx = s.messages.findIndex((m) => m.id === messageId);
         if (idx < 0) return s;
         const trimmed = s.messages.slice(0, idx + 1);
-        return { ...s, messages: trimmed, contextChars: calcContextChars(trimmed), updatedAt: Date.now() };
+        return {
+          ...s,
+          messages: trimmed,
+          contextChars: calcContextChars(trimmed),
+          updatedAt: Date.now(),
+        };
       }),
     }));
   },
@@ -149,23 +158,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set((state) => ({
       sessions,
       // Auto-select the most recent session if none is active
-      activeSessionId:
-        state.activeSessionId ?? (sessions.length > 0 ? sessions[0].id : null),
+      activeSessionId: state.activeSessionId ?? (sessions.length > 0 ? sessions[0].id : null),
     }));
   },
 
   renameSession: (id: string, title: string) => {
     set((state) => ({
-      sessions: state.sessions.map((s) =>
-        s.id === id ? { ...s, title } : s
-      ),
+      sessions: state.sessions.map((s) => (s.id === id ? { ...s, title } : s)),
     }));
   },
 
   setSessionModel: (sessionId: string, modelId: string) => {
     set((state) => ({
       sessions: state.sessions.map((s) =>
-        s.id === sessionId ? { ...s, modelId, updatedAt: Date.now() } : s
+        s.id === sessionId ? { ...s, modelId, updatedAt: Date.now() } : s,
       ),
     }));
   },

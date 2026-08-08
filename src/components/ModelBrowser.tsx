@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   Button,
   Input,
@@ -18,11 +18,9 @@ import {
   ArrowDownloadRegular,
   DeleteRegular,
   DismissRegular,
-  ArrowLeftRegular,
 } from "@fluentui/react-icons";
 import { useModelStore } from "../stores/modelStore";
 import * as geniex from "../services/geniex";
-import type { SearchModel } from "../types";
 
 interface ModelBrowserProps {
   onClose: () => void;
@@ -89,18 +87,23 @@ export default function ModelBrowser({ onClose }: ModelBrowserProps) {
   };
 
   return (
-    <Dialog open onOpenChange={(_, data) => { if (!data.open) onClose(); }}>
-      <DialogSurface style={{ maxWidth: 700, minHeight: 500 }}>
+    <Dialog
+      open
+      onOpenChange={(_, data) => {
+        if (!data.open) onClose();
+      }}
+    >
+      <DialogSurface className="mb-dialog-surface">
         <DialogBody>
           <DialogTitle>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div className="mb-dialog-title">
               <span>Model Browser</span>
               <Button appearance="transparent" icon={<DismissRegular />} onClick={onClose} />
             </div>
           </DialogTitle>
           <DialogContent>
             {/* ── Tab Bar ──────────────────────────────── */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            <div className="mb-tab-bar">
               <Button
                 appearance={tab === "installed" ? "primary" : "subtle"}
                 onClick={() => setTab("installed")}
@@ -117,23 +120,21 @@ export default function ModelBrowser({ onClose }: ModelBrowserProps) {
 
             {/* ── Error ────────────────────────────────── */}
             {error && (
-              <MessageBar intent="error" style={{ marginBottom: 12 }}>
+              <MessageBar intent="error" className="mb-error">
                 <MessageBarBody>{error}</MessageBarBody>
               </MessageBar>
             )}
 
             {/* ── Downloads in progress ─────────────────── */}
             {downloads.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
+              <div className="mb-downloads-section">
                 {downloads.map((d) => (
                   <div key={d.model} className="download-item">
                     <div className="download-item-header">
                       <span className="download-item-name">{d.model}</span>
                       <Spinner size="tiny" />
                     </div>
-                    <div style={{ fontSize: 12, color: "#8888a8" }}>
-                      {d.message}
-                    </div>
+                    <div className="mb-download-msg">{d.message}</div>
                   </div>
                 ))}
               </div>
@@ -143,7 +144,7 @@ export default function ModelBrowser({ onClose }: ModelBrowserProps) {
             {tab === "installed" && (
               <div>
                 {models.length === 0 ? (
-                  <div style={{ padding: "32px 0", textAlign: "center", color: "#8888a8" }}>
+                  <div className="mb-empty-state">
                     No models installed. Browse Hugging Face to pull one.
                   </div>
                 ) : (
@@ -179,7 +180,7 @@ export default function ModelBrowser({ onClose }: ModelBrowserProps) {
             {/* ── Search Tab ───────────────────────────── */}
             {tab === "search" && (
               <div>
-                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                <div className="mb-search-row">
                   <Input
                     placeholder="Search Hugging Face for GGUF models…"
                     value={query}
@@ -188,7 +189,7 @@ export default function ModelBrowser({ onClose }: ModelBrowserProps) {
                       if (e.key === "Enter") handleSearch();
                     }}
                     contentBefore={<SearchRegular />}
-                    style={{ flex: 1 }}
+                    className="mb-search-input"
                   />
                   <Button
                     appearance="primary"
@@ -222,9 +223,7 @@ export default function ModelBrowser({ onClose }: ModelBrowserProps) {
                           onClick={() => handlePull(model.id)}
                           disabled={downloads.some((d) => d.model === model.id)}
                         >
-                          {downloads.some((d) => d.model === model.id)
-                            ? "Pulling…"
-                            : "Pull"}
+                          {downloads.some((d) => d.model === model.id) ? "Pulling…" : "Pull"}
                         </Button>
                       </div>
                     </div>
@@ -232,9 +231,7 @@ export default function ModelBrowser({ onClose }: ModelBrowserProps) {
                 </div>
 
                 {searchResults.length === 0 && !isSearching && query && (
-                  <div style={{ padding: "24px 0", textAlign: "center", color: "#8888a8" }}>
-                    No GGUF models found for "{query}".
-                  </div>
+                  <div className="mb-empty-state search">No GGUF models found for "{query}".</div>
                 )}
               </div>
             )}
@@ -245,14 +242,18 @@ export default function ModelBrowser({ onClose }: ModelBrowserProps) {
       {/* ── Remove Confirmation ────────────────────── */}
       <Dialog
         open={removeTarget !== null}
-        onOpenChange={(_, data) => { if (!data.open) setRemoveTarget(null); }}
+        onOpenChange={(_, data) => {
+          if (!data.open) setRemoveTarget(null);
+        }}
       >
         <DialogSurface>
           <DialogBody>
             <DialogTitle>Remove Model</DialogTitle>
             <DialogContent>
-              <p>Remove <strong>{removeTarget}</strong> from local storage?</p>
-              <div style={{ marginTop: 16, display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <p>
+                Remove <strong>{removeTarget}</strong> from local storage?
+              </p>
+              <div className="dialog-footer">
                 <Button appearance="secondary" onClick={() => setRemoveTarget(null)}>
                   Cancel
                 </Button>

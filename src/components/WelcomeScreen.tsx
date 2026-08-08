@@ -1,6 +1,5 @@
-import React from "react";
 import { Button } from "@fluentui/react-components";
-import { ArrowDownloadRegular, AddRegular } from "@fluentui/react-icons";
+import { AddRegular } from "@fluentui/react-icons";
 import { useChatStore } from "../stores/chatStore";
 import { useModelStore } from "../stores/modelStore";
 
@@ -49,14 +48,7 @@ export default function WelcomeScreen() {
       </div>
 
       {/* Quick tips */}
-      <div
-        style={{
-          display: "flex",
-          gap: 24,
-          marginTop: 24,
-          maxWidth: 600,
-        }}
-      >
+      <div className="welcome-tips">
         {[
           {
             icon: "📥",
@@ -74,31 +66,10 @@ export default function WelcomeScreen() {
             desc: "Stream responses in real-time with OpenAI-compatible API integration.",
           },
         ].map((tip) => (
-          <div
-            key={tip.title}
-            style={{
-              flex: 1,
-              textAlign: "center",
-              padding: 16,
-              background: "#1e1e3a",
-              borderRadius: 12,
-              border: "1px solid #2a2a4a",
-            }}
-          >
-            <div style={{ fontSize: 24, marginBottom: 8 }}>{tip.icon}</div>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#e8e8f0",
-                marginBottom: 4,
-              }}
-            >
-              {tip.title}
-            </div>
-            <div style={{ fontSize: 12, color: "#8888a8", lineHeight: 1.5 }}>
-              {tip.desc}
-            </div>
+          <div key={tip.title} className="welcome-tip">
+            <div className="welcome-tip-icon">{tip.icon}</div>
+            <div className="welcome-tip-title">{tip.title}</div>
+            <div className="welcome-tip-desc">{tip.desc}</div>
           </div>
         ))}
       </div>

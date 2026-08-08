@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Button,
   Drawer,
@@ -19,21 +18,21 @@ export default function SettingsDrawer({ defaultTab = "app", onClose }: Settings
   return (
     <Drawer
       open
-      onOpenChange={(_, data) => { if (!data.open) onClose(); }}
+      onOpenChange={(_, data) => {
+        if (!data.open) onClose();
+      }}
       position="end"
-      style={{ width: 380 }}
+      className="drawer-width"
     >
       <DrawerHeader>
         <DrawerHeaderTitle
-          action={
-            <Button appearance="transparent" icon={<DismissRegular />} onClick={onClose} />
-          }
+          action={<Button appearance="transparent" icon={<DismissRegular />} onClick={onClose} />}
         >
           {defaultTab === "app" ? "App Settings" : "Model Settings"}
         </DrawerHeaderTitle>
       </DrawerHeader>
-      <DrawerBody style={{ padding: 0 }}>
-        <div style={{ padding: 16 }}>
+      <DrawerBody className="drawer-body-no-padding">
+        <div className="drawer-content-wrap">
           {defaultTab === "app" && <AppSettings />}
           {defaultTab === "model" && <ModelSettings />}
         </div>
